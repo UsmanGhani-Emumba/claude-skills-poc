@@ -7,7 +7,7 @@ This POC demonstrates how a **single agent with multiple skills** can replace a 
 ### Traditional Multi-Agent Approach
 ```
 ┌─────────────────┐     ┌─────────────────┐     ┌─────────────────┐
-│  Research Agent │────▶│  Writer Agent   │────▶│  Reviewer Agent │
+│  Research Agent │ ─── │  Writer Agent   │ ─── │  Reviewer Agent │
 │  (Own context)  │     │  (Own context)  │     │  (Own context)  │
 └─────────────────┘     └─────────────────┘     └─────────────────┘
         │                       │                       │
@@ -26,10 +26,10 @@ This POC demonstrates how a **single agent with multiple skills** can replace a 
 ```
 ┌──────────────────────────────────────────────────────────────┐
 │                     SINGLE AGENT                             │
-│  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐          │
-│  │ Researcher  │  │   Writer    │  │  Reviewer   │          │
-│  │   Skill     │  │   Skill     │  │   Skill     │          │
-│  └─────────────┘  └─────────────┘  └─────────────┘          │
+│  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐           │
+│  │ Researcher  │  │   Writer    │  │  Reviewer   │           │
+│  │   Skill     │  │   Skill     │  │   Skill     │           │
+│  └─────────────┘  └─────────────┘  └─────────────┘           │
 │         │               │               │                    │
 │         └───────────────┴───────────────┘                    │
 │                 SHARED CONTEXT WINDOW                        │
