@@ -2,7 +2,8 @@
   "permissions": {
     "allow": [
       "WebSearch",
-      "mcp__notion__API-post-search"
+      "mcp__notion__API-post-search",
+      "mcp__notion__API-patch-block-children"
     ]
   },
   "enableAllProjectMcpServers": true,

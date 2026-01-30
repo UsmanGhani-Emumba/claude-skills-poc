@@ -68,7 +68,7 @@ query: "<page name>"
 
 ⚠️ **Note:** Only use the `query` parameter. Other parameters like `filter` and `page_size` cause serialization errors in the current MCP version.
 
-### Step 2: Append Content
+### Step 2: Append Content (with Auto-Retry)
 
 Use `API-patch-block-children` to add content:
 
@@ -77,14 +77,89 @@ block_id: "<page_id from search results>"
 children: [array of block objects as JSON string]
 ```
 
-⚠️ **IMPORTANT: Batch your requests!** Notion API limits ~100 blocks per request. For long blog posts:
-1. Split content into batches of 10-20 blocks each
-2. Make multiple sequential API calls
-3. Each call appends to the end of the page
+## Automated Upload Strategy (CRITICAL)
 
-Example children parameter (small batch):
+⚠️ **The Notion API is prone to 400 errors.** Use this automated approach:
+
+### Batch Configuration
+- **Batch size: 5 blocks maximum** (smaller = more reliable)
+- **Never exceed 5 blocks per API call**
+- Convert all content to blocks first, then split into batches
+
+### Auto-Retry Loop (MANDATORY)
+
+**Before starting, create a batch tracking list:**
+```
+Total blocks: [count]
+Batches needed: [total / 5, rounded up]
+Current batch: 1
+```
+
+**For each batch, follow this loop:**
+
+```
+REPEAT until current_batch > total_batches:
+  1. Attempt API call for batch [current_batch]
+  2. IF success:
+     - Log: "✅ Batch [current_batch] uploaded successfully"
+     - Increment current_batch
+     - Continue to next batch
+  3. IF 400 error:
+     - Log: "⚠️ Batch [current_batch] failed - retrying..."
+     - Wait 2 seconds
+     - Retry SAME batch (up to 3 attempts)
+     - If still failing after 3 attempts:
+       a. Try with even smaller batch (2-3 blocks)
+       b. If still failing, try blocks one at a time
+  4. IF rate limited (429):
+     - Wait 30 seconds
+     - Retry same batch
+  5. NEVER skip a batch - keep retrying until success
+  6. Report progress: "[current_batch]/[total_batches] batches complete"
+```
+
+### Progress Tracking Template
+
+Use this format to track and display progress:
+```
+📤 Publishing Progress
+━━━━━━━━━━━━━━━━━━━━
+Total blocks: XX
+Batch size: 5
+Total batches: XX
+
+[■■■■■□□□□□] 50% - Batch 5/10
+✅ Batch 1: Success
+✅ Batch 2: Success
+✅ Batch 3: Success
+✅ Batch 4: Success
+🔄 Batch 5: In progress...
+```
+
+### 400 Error Recovery Strategies
+
+If a batch keeps failing with 400:
+
+1. **Reduce batch size** — Try 3 blocks, then 2, then 1
+2. **Check block content** — Remove special characters, emojis, or unusual formatting
+3. **Simplify rich text** — Use plain text without formatting
+4. **Split long paragraphs** — Break paragraphs over 2000 characters
+
+### Example: Single Block Upload (Fallback)
+
+When batches fail, upload one block at a time:
 ```json
 [{"type": "paragraph", "paragraph": {"rich_text": [{"type": "text", "text": {"content": "Your text"}}]}}]
+```
+
+### Completion Confirmation
+
+Only report success when ALL batches are uploaded:
+```
+✅ Publishing Complete!
+━━━━━━━━━━━━━━━━━━━━
+All [XX] batches uploaded successfully.
+Total blocks published: [XX]
 ```
 
 ## Notion Block Format
@@ -111,7 +186,22 @@ Rich text format:
 | Permission denied | Ask user to share page with integration |
 | Page not found | Ask user to verify page name and that it's shared |
 | Multiple pages found | Show options and ask user to confirm |
-| Rate limited | Wait and retry, inform user |
+| Rate limited (429) | Wait 30 seconds, then auto-retry same batch |
+| **400 Bad Request** | **Auto-retry with smaller batch (see below)** |
+| Timeout | Wait 5 seconds, auto-retry same batch |
+
+### 400 Error Auto-Recovery Protocol
+
+When receiving a 400 error, follow this escalation:
+
+1. **First attempt failed** → Retry same batch immediately
+2. **Second attempt failed** → Wait 2 seconds, retry same batch
+3. **Third attempt failed** → Reduce batch size by half, retry
+4. **Fourth attempt failed** → Try uploading blocks one at a time
+5. **Single block still failing** → Simplify that block's content (remove special chars/formatting)
+6. **Still failing** → Skip problematic block, log it, continue with remaining blocks
+
+**NEVER stop the upload process due to errors.** Always continue until all possible content is uploaded.
 
 ## Success Criteria
 
