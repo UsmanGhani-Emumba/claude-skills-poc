@@ -11,42 +11,56 @@ Elevate draft content to publication-ready quality through systematic review and
 
 ## Prerequisites
 
-- Draft blog post should be available (from Writer skill)
-- Original research brief (optional but helpful for fact-checking)
+- Draft blog post available (from Writer skill)
+- Research brief (for fact-checking)
+- Target audience (for tone validation)
+
+## Review Checklist
+
+### 1. Content Quality
+- [ ] Every claim backed by research — no unsupported assertions
+- [ ] No fluff paragraphs — each adds value
+- [ ] Clear narrative thread from intro to conclusion
+- [ ] Appropriate depth — not too shallow, not overwhelming
+- [ ] Examples are concrete and relatable
+
+### 2. Audience Alignment
+- [ ] Tone matches target audience
+- [ ] Complexity level appropriate
+- [ ] Jargon explained (or removed for general audience)
+- [ ] Focus areas relevant to audience needs
+
+### 3. Structure Check
+- [ ] Title is compelling and clear (under 60 characters)
+- [ ] Opening hook grabs attention in first sentence
+- [ ] Clear section flow with smooth transitions
+- [ ] Conclusion is memorable, not generic
+- [ ] 800-1200 words (unless specified otherwise)
+
+### 4. Style Compliance
+- [ ] Conversational but authoritative tone
+- [ ] 2-4 sentences per paragraph (5 max)
+- [ ] Sentence variety (not all same length)
+- [ ] No filler words (very, really, just, actually)
+- [ ] Active voice preferred over passive
+- [ ] Reading level accessible (8th-10th grade)
+
+### 5. Technical Polish
+- [ ] Grammar and spelling correct
+- [ ] Headings are scannable and informative
+- [ ] Emphasis used sparingly (bold, italics)
+- [ ] Sources cited properly
 
 ## Review Workflow
 
-Execute these checks in order:
-
-### 1. Structure Check
-- Does the opening hook grab attention?
-- Is there a clear narrative flow?
-- Does each section transition smoothly to the next?
-- Is the conclusion memorable (not generic)?
-
-### 2. Content Quality Check
-- Are all claims supported by sources?
-- Are there any unsupported assertions to flag or remove?
-- Is the content depth appropriate (not too shallow, not overwhelming)?
-- Are examples concrete and relatable?
-
-### 3. Engagement Check
-- Would YOU want to keep reading?
-- Are there any dull stretches that need energy?
-- Is the tone consistent throughout?
-- Are subheadings compelling (not generic)?
-
-### 4. Technical Check
-- Grammar and spelling
-- Sentence variety (not all same length/structure)
-- Paragraph length (break up walls of text)
-- Jargon (explain or remove)
-
-### 5. Final Polish
-- Strengthen weak verbs (is/was → active verbs)
-- Cut filler words (very, really, just, actually)
-- Sharpen the opening line
-- Ensure the last line resonates
+1. **Run through checklist** — Systematically check all items above
+2. **Flag issues** — Note what fails each check
+3. **Apply fixes** — Make improvements while preserving author voice
+4. **Final polish:**
+   - Strengthen weak verbs (is/was → active verbs)
+   - Cut filler words (very, really, just, actually)
+   - Sharpen the opening line
+   - Ensure the last line resonates
 
 ## Output Format
 
@@ -71,11 +85,11 @@ Provide the improved blog post with a brief changelog:
 - [Optional improvement 2]
 ```
 
-## Quality Criteria
+## Success Criteria
 
-- All five review checks completed
+- All checklist items pass (or flagged with reason)
 - At least 3 substantive improvements made
-- Maintains author's voice while elevating quality
+- Author's voice preserved while elevating quality
 - Final output is publication-ready
 
 ## Reference

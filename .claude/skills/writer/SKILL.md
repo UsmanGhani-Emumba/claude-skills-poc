@@ -11,8 +11,35 @@ Transform research findings into an engaging, well-structured blog post that inf
 
 ## Prerequisites
 
-- Research brief should be available (from Researcher skill)
-- If no research exists, request research phase first
+**Required before writing:**
+
+1. ✅ Research brief available (from Researcher skill)
+2. ✅ **Target audience defined**
+
+### Audience Check (CRITICAL)
+
+⚠️ **STOP** if target audience is not specified. Ask the user:
+
+> "Who is the target audience for this blog? For example:
+> - **General public** — No assumed knowledge, conversational tone
+> - **Industry professionals** — Familiar with terminology, deeper insights
+> - **Executives/Decision-makers** — Bottom-line focused, time-constrained
+> - **Technical practitioners** — Detail-oriented, wants specifics
+> - **Beginners/Students** — Educational tone, explain fundamentals
+> 
+> Or describe your specific audience."
+
+**Do not proceed with writing until audience is confirmed.**
+
+### How Audience Affects Writing
+
+| Audience | Tone | Complexity | Focus |
+|----------|------|------------|-------|
+| General public | Warm, accessible | Low jargon | Relatable examples |
+| Professionals | Peer-to-peer | Industry terms OK | Trends, implications |
+| Executives | Direct, efficient | High-level | ROI, decisions, risks |
+| Technical | Precise, detailed | Deep specifics | How-to, implementation |
+| Beginners | Patient, encouraging | Define everything | Fundamentals, analogies |
 
 ## Workflow
 
@@ -44,30 +71,7 @@ Transform research findings into an engaging, well-structured blog post that inf
 *Sources: [List key sources used]*
 ```
 
-## Writing Guidelines
+## References
 
-**Tone**: Conversational but authoritative. Write like explaining to a smart friend.
-
-**Structure**:
-- Paragraphs: 3-5 sentences max
-- Use subheadings to break up content
-- Include at least one statistic or quote per major section
-
-**Engagement tactics**:
-- Open with a hook (surprising stat, provocative question, bold claim)
-- Use concrete examples over abstract explanations
-- End sections with transitions that pull readers forward
-- Close with something memorable (not a generic summary)
-
-**Length**: 800-1200 words unless otherwise specified
-
-## Quality Criteria
-
-- Every claim backed by research
-- No fluff paragraphs - each adds value
-- Clear narrative thread from intro to conclusion
-- Accessible to non-experts while respecting reader intelligence
-
-## Reference
-
-For a complete example of expected output, see [references/sample-output.md](references/sample-output.md)
+- [references/style-guide.md](references/style-guide.md) — Formatting, typography, voice guidelines
+- [references/sample-output.md](references/sample-output.md) — Complete blog example
