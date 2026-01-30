@@ -33,8 +33,8 @@ Deploy finalized, reviewed content to an existing Notion page with proper format
 > 1. Notion MCP server is configured and running
 > 2. Your integration token is valid
 > 3. Target page is shared with the integration
->
-> Run `/mcp` to check connection status."
+
+> Run `/mcp` command in Claude Code CLI to check connection status."
 
 **Do not attempt publishing without confirmed connection.**
 

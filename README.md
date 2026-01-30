@@ -156,18 +156,105 @@ Ensure the agent has access to the `.claude/skills` folder and web search capabi
 
 The Publisher skill requires Notion MCP connection. Setup once, use forever.
 
-### Quick Setup
+### Prerequisites
 
-1. **Create Notion integration** at [notion.so/my-integrations](https://www.notion.so/my-integrations)
-2. **Copy your token** (starts with `ntn_`)
-3. **Create config file:**
+Before using the publisher skill, you must set up your Notion workspace:
+
+1. **Create a Parent Page** in Notion (e.g., "Blog Posts" or "Claude Workspace")
+   - This acts as a container for all your published content
+
+2. **Create Child Pages** for each blog you want to publish
+   - Create an empty child page under the parent with the exact name you'll use in your prompt
+   - Example: Create a page named "Agentic AI" under "Blog Posts"
+
+3. **Share the Parent Page** with your integration
+   - Open the parent page in Notion
+   - Click the `⋯` menu (top right)
+   - Select **Add connections**
+   - Choose your integration
+   - All child pages will inherit this access
+
+```
+Notion Workspace
+└── Blog Posts (Parent Page) ← Share this with integration
+    ├── Agentic AI (Child Page) ← Use this name in prompt
+    ├── Future of Work (Child Page)
+    └── AI in Healthcare (Child Page)
+```
+
+### Integration Setup
+
+#### Step 1: Create a Notion Integration
+
+1. Go to [notion.so/my-integrations](https://www.notion.so/my-integrations)
+2. Click **"+ New integration"**
+3. Fill in the details:
+   - **Name:** Give it a name (e.g., "Claude Blog Publisher")
+   - **Associated workspace:** Select your Notion workspace
+   - **Type:** Keep as "Internal integration"
+4. Click **"Submit"**
+
+#### Step 2: Get the Integration Secret Key
+
+1. After creating the integration, you'll see the **"Internal Integration Secret"**
+2. Click **"Show"** to reveal the token
+3. Click **"Copy"** to copy the token
+   - The token starts with `ntn_` (e.g., `ntn_abc123xyz...`)
+4. **Keep this token safe** - treat it like a password
+
+#### Step 3: Configure the MCP Server
+
+1. **Create config file:**
    ```bash
    cp .mcp.json.example .mcp.json
    ```
-4. **Add your token** to `.mcp.json`
-5. **Create a workspace page** in Notion (e.g., "Claude Workspace")
-6. **Share the page** with your integration (⋯ → Add connections)
-7. **Verify connection:** Run `/mcp` in Claude Code
+
+2. **Add your token** to `.mcp.json`:
+   ```json
+   {
+     "mcpServers": {
+       "notion": {
+         "command": "npx",
+         "args": ["-y", "@notionhq/notion-mcp-server"],
+         "env": {
+           "NOTION_TOKEN": "ntn_your_token_here"
+         }
+       }
+     }
+   }
+   ```
+   Replace `ntn_your_token_here` with the token you copied.
+
+#### Step 4: Connect Integration to Your Pages
+
+1. Open your **Parent Page** in Notion (e.g., "Blog Posts")
+2. Click the `⋯` menu (top right corner)
+3. Scroll down and click **"Add connections"**
+4. Search for your integration name (e.g., "Claude Blog Publisher")
+5. Click to add it
+6. Confirm by clicking **"Confirm"**
+
+All child pages under this parent will automatically have access.
+
+#### Step 5: Verify Connection
+
+Run `/mcp` command in Claude Code CLI to verify the Notion MCP server is connected and working.
+
+### Usage Example
+
+Once setup is complete, use this prompt in Claude Code CLI:
+
+```
+Write a blog on "What is Agentic AI" and publish on Notion on page "Agentic AI"
+```
+
+**Note:** The page name must already exist in Notion, otherwise the API call will fail.
+
+The agent will:
+1. Research the topic (Researcher skill)
+2. Write the blog post (Writer skill)
+3. Review and polish (Reviewer skill)
+4. Publish to the specified Notion page (Publisher skill)
 
 ### For Team Members
 
@@ -182,6 +269,8 @@ See `.mcp.json.example` for the config template.
 
 ## Skill Pipeline
 
+These commands can be found in Claude Code CLI:
+
 ```
 /researcher  →  Gathers facts, creates research brief
      ↓
@@ -192,4 +281,4 @@ See `.mcp.json.example` for the config template.
 /publisher   →  Publishes to Notion workspace
 ```
 
-Each skill is independent and can be used standalone or in sequence.
+Each skill is independent and can be used standalone or in sequence within Claude Code CLI.
