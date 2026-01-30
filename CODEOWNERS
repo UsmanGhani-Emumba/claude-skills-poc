@@ -1,0 +1,14 @@
+# CODEOWNERS file for claude-code-skills-poc
+# Each line is a file pattern followed by one or more owners.
+
+# Default owner for everything in the repo
+*                                   @UsmanGhani-Emumba
+
+# Claude Code skills
+.claude/skills/                     @UsmanGhani-Emumba
+
+# MCP configuration
+.mcp.json                           @UsmanGhani-Emumba
+
+# Documentation
+README.md                           @UsmanGhani-Emumba

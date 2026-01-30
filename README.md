@@ -69,7 +69,7 @@ blog-agent-poc/
 │           ├── SKILL.md              # Notion publishing
 │           └── references/
 │               └── sample-output.md  # Example publish output
-├── .mcp.json.example                 # MCP config template (commit this)
+├── .mcp-example.json                 # MCP config template (commit this)
 ├── .mcp.json                         # Your MCP config (gitignored)
 ├── .gitignore
 └── README.md
@@ -206,7 +206,7 @@ Notion Workspace
 
 1. **Create config file:**
    ```bash
-   cp .mcp.json.example .mcp.json
+   cp .mcp-example.json .mcp.json
    ```
 
 2. **Add your token** to `.mcp.json`:
@@ -263,7 +263,7 @@ Each person needs their own:
 - `.mcp.json` file (gitignored, not shared)
 - Shared pages in their Notion workspace
 
-See `.mcp.json.example` for the config template.
+See `.mcp-example.json` for the config template.
 
 ### Workspace Example:
 
