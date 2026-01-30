@@ -265,6 +265,10 @@ Each person needs their own:
 
 See `.mcp.json.example` for the config template.
 
+### Workspace Example:
+
+**Workspace URL :**  https://www.notion.so/Claude-Workspace-2f801e7f802c80cda17cd058fe3d60b3
+
 ---
 
 ## Skill Pipeline
