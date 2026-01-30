@@ -7,7 +7,7 @@ This POC demonstrates how a **single agent with multiple skills** can replace a 
 ### Traditional Multi-Agent Approach
 ```
 ┌─────────────────┐     ┌─────────────────┐     ┌─────────────────┐
-│  Research Agent │ ─── │  Writer Agent   │ ─── │  Reviewer Agent │
+│  Research Agent │────▶│  Writer Agent   │────▶│  Reviewer Agent │
 │  (Own context)  │     │  (Own context)  │     │  (Own context)  │
 └─────────────────┘     └─────────────────┘     └─────────────────┘
         │                       │                       │
@@ -26,10 +26,10 @@ This POC demonstrates how a **single agent with multiple skills** can replace a 
 ```
 ┌──────────────────────────────────────────────────────────────┐
 │                     SINGLE AGENT                             │
-│  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐           │
-│  │ Researcher  │  │   Writer    │  │  Reviewer   │           │
-│  │   Skill     │  │   Skill     │  │   Skill     │           │
-│  └─────────────┘  └─────────────┘  └─────────────┘           │
+│  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐          │
+│  │ Researcher  │  │   Writer    │  │  Reviewer   │          │
+│  │   Skill     │  │   Skill     │  │   Skill     │          │
+│  └─────────────┘  └─────────────┘  └─────────────┘          │
 │         │               │               │                    │
 │         └───────────────┴───────────────┘                    │
 │                 SHARED CONTEXT WINDOW                        │
@@ -49,15 +49,20 @@ This POC demonstrates how a **single agent with multiple skills** can replace a 
 
 ```
 blog-agent-poc/
-├── skills/
-│   ├── researcher/
-│   │   └── SKILL.md    # Web research, fact gathering
-│   ├── writer/
-│   │   └── SKILL.md    # Blog drafting, storytelling
-│   └── reviewer/
-│       └── SKILL.md    # Quality check, polishing
-├── examples/
-│   └── sample-output.md
+├── .claude/
+│   └── skills/
+│       ├── researcher/
+│       │   ├── SKILL.md              # Web research, fact gathering
+│       │   └── references/
+│       │       └── sample-output.md  # Example research brief
+│       ├── writer/
+│       │   ├── SKILL.md              # Blog drafting, storytelling
+│       │   └── references/
+│       │       └── sample-output.md  # Example blog draft
+│       └── reviewer/
+│           ├── SKILL.md              # Quality check, polishing
+│           └── references/
+│               └── sample-output.md  # Example reviewed output
 └── README.md
 ```
 
@@ -78,7 +83,7 @@ The agent reads the skill description and decides which skill to activate based 
 ## Demo Script (5 minutes)
 
 ### Setup
-Ensure the agent has access to the skills folder and web search capability.
+Ensure the agent has access to the `.claude/skills` folder and web search capability.
 
 ### Demo Flow
 
