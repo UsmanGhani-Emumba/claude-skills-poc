@@ -7,7 +7,7 @@ description: Publishing skill for deploying finalized content to Notion. Activat
 
 ## Purpose
 
-Deploy finalized, reviewed content to Notion with proper formatting, metadata, and organization.
+Deploy finalized, reviewed content to an existing Notion page with proper formatting.
 
 ## Prerequisites
 
@@ -15,7 +15,15 @@ Deploy finalized, reviewed content to Notion with proper formatting, metadata, a
 
 1. ✅ Finalized blog content (from Reviewer skill)
 2. ✅ Notion MCP connection active
-3. ✅ Target workspace/page specified
+3. ✅ **User has created an empty page in Notion** (see below)
+
+### User Setup (REQUIRED)
+
+⚠️ **Before publishing, the user must:**
+
+1. Create an empty page in Notion where the blog will be published
+2. Share that page with the Notion integration (Add connections → select integration)
+3. Provide the **exact page name** to Claude
 
 ### Connection Check (CRITICAL)
 
@@ -33,62 +41,83 @@ Deploy finalized, reviewed content to Notion with proper formatting, metadata, a
 ## Workflow
 
 1. **Verify connection** — Check Notion MCP is active
-2. **Confirm destination** — Ask user where to publish if not specified
-3. **Format content** — Convert markdown to Notion blocks
-4. **Create page** — Create new page with blog title
-5. **Add metadata** — Apply properties and icon
-6. **Publish content** — Write formatted blocks to the page
+2. **Ask for page name** — Request the exact name of the target Notion page
+3. **Search for page** — Use `API-post-search` to find the page by name
+4. **Confirm page** — Verify the correct page was found
+5. **Format content** — Convert markdown to Notion blocks
+6. **Append content** — Use `API-patch-block-children` to add blocks to the page
 7. **Return link** — Provide the Notion page URL
 
-## Destination Check
+## Page Name Request
 
-If destination is not specified, ask:
+If page name is not specified, ask:
 
-> "Where should I publish this blog?
-> - **Default workspace** — Your main Notion workspace
-> - **Specific page** — Provide the parent page name
-> - **Database** — Add as entry to a blog database"
+> "Please provide the **exact name** of the Notion page where you want to publish this blog.
+>
+> **Note:** The page must already exist in Notion and be shared with the integration."
 
-## Notion Formatting
+## API Usage
 
-| Markdown | Notion Block |
-|----------|--------------|
-| `# Title` | Page title |
-| `## Heading` | Heading 2 |
-| `### Subheading` | Heading 3 |
-| Paragraphs | Paragraph blocks |
-| `- item` | Bulleted list |
-| `1. item` | Numbered list |
-| `> quote` | Quote block |
-| `**bold**` | Bold text |
-| `*italic*` | Italic text |
-| `---` | Divider |
-| 💡 Callout | Callout block with icon |
+### Step 1: Search for Page
 
-## Page Metadata
+Use `API-post-search` to find the target page:
 
-When creating the page, include:
+```
+query: "<page name>"
+```
 
-- **Title** — Blog title (from H1)
-- **Icon** — Relevant emoji based on topic
-- **Created** — Current date
-- **Status** — "Published"
-- **Author** — "AI Generated" or user name if specified
-- **Audience** — Target audience (from research brief)
+⚠️ **Note:** Only use the `query` parameter. Other parameters like `filter` and `page_size` cause serialization errors in the current MCP version.
+
+### Step 2: Append Content
+
+Use `API-patch-block-children` to add content:
+
+```
+block_id: "<page_id from search results>"
+children: [array of block objects as JSON string]
+```
+
+⚠️ **IMPORTANT: Batch your requests!** Notion API limits ~100 blocks per request. For long blog posts:
+1. Split content into batches of 10-20 blocks each
+2. Make multiple sequential API calls
+3. Each call appends to the end of the page
+
+Example children parameter (small batch):
+```json
+[{"type": "paragraph", "paragraph": {"rich_text": [{"type": "text", "text": {"content": "Your text"}}]}}]
+```
+
+## Notion Block Format
+
+When converting markdown to Notion blocks for `children` parameter:
+
+| Markdown | Notion Block Type |
+|----------|-------------------|
+| `## Heading` | `{"type": "heading_2", "heading_2": {"rich_text": [...]}}` |
+| `### Subheading` | `{"type": "heading_3", "heading_3": {"rich_text": [...]}}` |
+| Paragraphs | `{"type": "paragraph", "paragraph": {"rich_text": [...]}}` |
+| `- item` | `{"type": "bulleted_list_item", "bulleted_list_item": {"rich_text": [...]}}` |
+
+Rich text format:
+```json
+{"type": "text", "text": {"content": "Your text here"}}
+```
 
 ## Error Handling
 
 | Error | Response |
 |-------|----------|
 | MCP not connected | Guide user to set up connection |
-| Permission denied | Check page is shared with integration |
-| Page not found | Verify parent page exists |
+| Permission denied | Ask user to share page with integration |
+| Page not found | Ask user to verify page name and that it's shared |
+| Multiple pages found | Show options and ask user to confirm |
 | Rate limited | Wait and retry, inform user |
 
 ## Success Criteria
 
-- Page created with correct title and metadata
-- All content properly formatted
+- Target page found by name
+- All content properly formatted as Notion blocks
+- Content successfully appended to page
 - User receives working Notion URL
 
 ## Reference
