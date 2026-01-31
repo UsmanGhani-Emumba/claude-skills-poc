@@ -2,13 +2,13 @@
 # Each line is a file pattern followed by one or more owners.
 
 # Default owner for everything in the repo
-*                                   @UsmanGhani-Emumba, @Usman-Ghani123
+*                                   @UsmanGhani-Emumba @Usman-Ghani123
 
 # Claude Code skills
-.claude/skills/                     @UsmanGhani-Emumba, @Usman-Ghani123
+.claude/skills/                     @UsmanGhani-Emumba @Usman-Ghani123
 
 # MCP configuration
-.mcp.json                           @UsmanGhani-Emumba, @Usman-Ghani123
+.mcp.json                           @UsmanGhani-Emumba @Usman-Ghani123
 
 # Documentation
-README.md                           @UsmanGhani-Emumba, @Usman-Ghani123
+README.md                           @UsmanGhani-Emumba @Usman-Ghani123
