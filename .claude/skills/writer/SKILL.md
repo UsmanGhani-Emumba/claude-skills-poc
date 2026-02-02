@@ -41,12 +41,28 @@ Transform research findings into an engaging, well-structured blog post that inf
 | Technical | Precise, detailed | Deep specifics | How-to, implementation |
 | Beginners | Patient, encouraging | Define everything | Fundamentals, analogies |
 
+## Metrics Tracking
+
+**At skill START**, run:
+```bash
+python metrics/tracker.py start writer "<research_brief_summary>"
+```
+
+**At skill END**, run:
+```bash
+python metrics/tracker.py end writer "<final_blog_post>"
+```
+
+This tracks latency, token usage, and cost. View reports with: `python metrics/tracker.py report`
+
 ## Workflow
 
-1. **Analyze research** - Identify the most compelling angle from the brief
+1. **Start metrics tracking** - Run the start command above
+2. **Analyze research** - Identify the most compelling angle from the brief
 2. **Outline structure** - Plan the narrative arc before writing
 3. **Draft content** - Write with the target audience in mind
 4. **Weave in sources** - Naturally incorporate facts and citations
+5. **End metrics tracking** - Run the end command with the complete blog post
 
 ## Blog Structure Template
 

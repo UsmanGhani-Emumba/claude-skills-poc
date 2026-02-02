@@ -3,7 +3,11 @@
     "allow": [
       "WebSearch",
       "mcp__notion__API-post-search",
-      "mcp__notion__API-patch-block-children"
+      "mcp__notion__API-patch-block-children",
+      "Bash(python metrics/tracker.py start:*)",
+      "Bash(python metrics/tracker.py end test:*)",
+      "Bash(python metrics/tracker.py:*)",
+      "Bash(python:*)"
     ]
   },
   "enableAllProjectMcpServers": true,

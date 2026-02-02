@@ -18,3 +18,9 @@ Thumbs.db
 
 # Node (if using npm packages)
 node_modules/
+
+# Metrics data (keep tracker.py, ignore data files)
+metrics/*.jsonl
+metrics/active_sessions.json
+
+nul

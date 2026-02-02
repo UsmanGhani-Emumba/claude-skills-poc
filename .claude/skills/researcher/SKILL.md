@@ -9,9 +9,24 @@ description: Research skill for gathering facts, data, and sources on a given to
 
 Gather comprehensive, accurate information on a topic to serve as the foundation for content creation.
 
+## Metrics Tracking
+
+**At skill START**, run:
+```bash
+python metrics/tracker.py start researcher "<user_query>"
+```
+
+**At skill END**, run:
+```bash
+python metrics/tracker.py end researcher "<final_output>"
+```
+
+This tracks latency, token usage, and cost. View reports with: `python metrics/tracker.py report`
+
 ## Workflow
 
-1. **Clarify scope** - Identify the core topic and any specific angles requested
+1. **Start metrics tracking** - Run the start command above with the user's query
+2. **Clarify scope** - Identify the core topic and any specific angles requested
 2. **Search strategically** - Use 3-5 targeted searches covering:
    - Core concept/definition
    - Recent developments (include current year)
@@ -19,6 +34,7 @@ Gather comprehensive, accurate information on a topic to serve as the foundation
    - Expert perspectives or quotes
 3. **Extract and organize** - Pull out key facts, citing sources
 4. **Compile research brief** - Structure findings for the Writer skill
+5. **End metrics tracking** - Run the end command with the complete research brief output
 
 ## Output Format
 

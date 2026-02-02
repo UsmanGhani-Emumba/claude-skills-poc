@@ -51,9 +51,24 @@ Elevate draft content to publication-ready quality through systematic review and
 - [ ] Emphasis used sparingly (bold, italics)
 - [ ] Sources cited properly
 
+## Metrics Tracking
+
+**At skill START**, run:
+```bash
+python metrics/tracker.py start reviewer "<draft_blog_summary>"
+```
+
+**At skill END**, run:
+```bash
+python metrics/tracker.py end reviewer "<revised_blog_post>"
+```
+
+This tracks latency, token usage, and cost. View reports with: `python metrics/tracker.py report`
+
 ## Review Workflow
 
-1. **Run through checklist** — Systematically check all items above
+1. **Start metrics tracking** - Run the start command above
+2. **Run through checklist** — Systematically check all items above
 2. **Flag issues** — Note what fails each check
 3. **Apply fixes** — Make improvements while preserving author voice
 4. **Final polish:**
@@ -61,6 +76,7 @@ Elevate draft content to publication-ready quality through systematic review and
    - Cut filler words (very, really, just, actually)
    - Sharpen the opening line
    - Ensure the last line resonates
+5. **End metrics tracking** - Run the end command with the revised blog post
 
 ## Output Format
 

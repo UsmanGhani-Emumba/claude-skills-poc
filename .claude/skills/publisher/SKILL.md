@@ -38,15 +38,31 @@ Deploy finalized, reviewed content to an existing Notion page with proper format
 
 **Do not attempt publishing without confirmed connection.**
 
+## Metrics Tracking
+
+**At skill START**, run:
+```bash
+python metrics/tracker.py start publisher "<content_summary>"
+```
+
+**At skill END**, run:
+```bash
+python metrics/tracker.py end publisher "<notion_url_and_status>"
+```
+
+This tracks latency, token usage, and cost. View reports with: `python metrics/tracker.py report`
+
 ## Workflow
 
-1. **Verify connection** — Check Notion MCP is active
+1. **Start metrics tracking** - Run the start command above
+2. **Verify connection** — Check Notion MCP is active
 2. **Ask for page name** — Request the exact name of the target Notion page
 3. **Search for page** — Use `API-post-search` to find the page by name
 4. **Confirm page** — Verify the correct page was found
 5. **Format content** — Convert markdown to Notion blocks
 6. **Append content** — Use `API-patch-block-children` to add blocks to the page
 7. **Return link** — Provide the Notion page URL
+8. **End metrics tracking** - Run the end command with the Notion URL and status
 
 ## Page Name Request
 
