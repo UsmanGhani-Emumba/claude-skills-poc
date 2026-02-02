@@ -84,8 +84,39 @@ This tracks latency, token usage, and cost. View reports with: `python metrics/t
 [1-2 paragraphs wrapping up with a memorable ending]
 
 ---
-*Sources: [List key sources used]*
+
+**Sources:**
+
+- [Source Title 1](URL)
+- [Source Title 2](URL)
+- [Source Title 3](URL)
 ```
+
+## Source Formatting Rules
+
+⚠️ **CRITICAL: Sources must ALWAYS be formatted as a bulleted markdown list, one source per line.**
+
+### ✅ CORRECT Format:
+```markdown
+---
+
+**Sources:**
+
+- [GitHub Copilot Statistics](https://github.com/...)
+- [Indeed Hiring Lab](https://indeed.com/...)
+- [MIT Technology Review](https://technologyreview.com/...)
+- [Stack Overflow 2025 Survey](https://stackoverflow.com/...)
+```
+
+### ❌ WRONG Format (NEVER do this):
+```markdown
+Sources: GitHub Copilot Statistics, Indeed Hiring Lab, MIT Technology Review, Stack Overflow 2025 Survey
+```
+
+The inline comma-separated format is **forbidden** because:
+1. Links are not clickable
+2. Hard to distinguish individual sources
+3. Looks unprofessional
 
 ## References
 

@@ -150,37 +150,65 @@ Ensure the agent has access to the `.claude/skills` folder and web search capabi
 - The agent decides which skill to activate based on task requirements
 - Multiple skills can be used in sequence within a single conversation
 
+### Advanced Features
+
+- **Parallel Sub-Agents (Researcher):** The researcher skill can spawn multiple sub-agents in parallel to research different sub-topics simultaneously, then compile results into a unified brief
+- **Auto-Discovery (Publisher):** The publisher skill automatically discovers Notion pages connected to your integration—no manual page name entry required
+- **Two-Step Publishing:** Creates an empty page first, then appends content in batches for reliability
+
 ---
 
 ## Notion MCP Setup
 
 The Publisher skill requires Notion MCP connection. Setup once, use forever.
 
-### Prerequisites
+### Prerequisites (Simple!)
 
-Before using the publisher skill, you must set up your Notion workspace:
+Before using the publisher skill, you only need:
 
 1. **Create a Parent Page** in Notion (e.g., "Blog Posts" or "Claude Workspace")
    - This acts as a container for all your published content
+   - **That's it!** No need to create child pages manually
 
-2. **Create Child Pages** for each blog you want to publish
-   - Create an empty child page under the parent with the exact name you'll use in your prompt
-   - Example: Create a page named "Agentic AI" under "Blog Posts"
-
-3. **Share the Parent Page** with your integration
+2. **Share the Parent Page** with your integration
    - Open the parent page in Notion
    - Click the `⋯` menu (top right)
    - Select **Add connections**
    - Choose your integration
-   - All child pages will inherit this access
 
 ```
 Notion Workspace
 └── Blog Posts (Parent Page) ← Share this with integration
-    ├── Agentic AI (Child Page) ← Use this name in prompt
-    ├── Future of Work (Child Page)
-    └── AI in Healthcare (Child Page)
+    └── (New pages created automatically by the skill!)
 ```
+
+### How Publishing Works (Auto-Discovery)
+
+The publisher skill **automatically discovers** all pages connected to your Notion integration:
+
+```
+┌─────────────────────────────────────────────────────────┐
+│  1. Skill discovers all connected pages automatically   │
+└─────────────────────────────────────────────────────────┘
+                          ↓
+┌─────────────────────────────────────────────────────────┐
+│  2. You select the parent page from a list:             │
+│     ○ Blog Posts                                        │
+│     ○ My Articles                                       │
+│     ○ Published Content                                 │
+└─────────────────────────────────────────────────────────┘
+                          ↓
+┌─────────────────────────────────────────────────────────┐
+│  3. Skill creates a NEW child page with the blog title  │
+│     and uploads all content automatically               │
+└─────────────────────────────────────────────────────────┘
+```
+
+**No manual page creation needed!** The skill:
+- Auto-discovers available Notion pages
+- Presents them as selectable options
+- Creates a new child page with the blog title
+- Uploads content in batches for reliability
 
 ### Integration Setup
 
@@ -225,7 +253,7 @@ Notion Workspace
    ```
    Replace `ntn_your_token_here` with the token you copied.
 
-#### Step 4: Connect Integration to Your Pages
+#### Step 4: Connect Integration to Your Parent Page
 
 1. Open your **Parent Page** in Notion (e.g., "Blog Posts")
 2. Click the `⋯` menu (top right corner)
@@ -234,40 +262,54 @@ Notion Workspace
 5. Click to add it
 6. Confirm by clicking **"Confirm"**
 
-All child pages under this parent will automatically have access.
-
 #### Step 5: Verify Connection
 
 Run `/mcp` command in Claude Code CLI to verify the Notion MCP server is connected and working.
 
 ### Usage Example
 
-Once setup is complete, use this prompt in Claude Code CLI:
+Once setup is complete, simply use this prompt in Claude Code CLI:
 
 ```
-Write a blog on "What is Agentic AI" and publish on Notion on page "Agentic AI"
+Write a blog on "What is Agentic AI" and publish to Notion
 ```
-
-**Note:** The page name must already exist in Notion, otherwise the API call will fail.
 
 The agent will:
-1. Research the topic (Researcher skill)
+1. Research the topic (Researcher skill with parallel sub-agents)
 2. Write the blog post (Writer skill)
 3. Review and polish (Reviewer skill)
-4. Publish to the specified Notion page (Publisher skill)
+4. **Auto-discover your Notion pages and ask you to select one**
+5. **Create a new page** with the blog title under your selected parent
+6. **Upload all content** automatically
+
+**Example output:**
+```
+📋 Found 2 Notion pages connected to the integration:
+
+Select parent page:
+  ○ Blog Posts
+  ○ My Articles
+
+[You select "Blog Posts"]
+
+✅ Published Successfully!
+New Page Created: "What is Agentic AI"
+Parent Page: "Blog Posts"
+[Link to Notion page]
+```
 
 ### For Team Members
 
 Each person needs their own:
 - Notion integration token
 - `.mcp.json` file (gitignored, not shared)
-- Shared pages in their Notion workspace
+- At least one parent page shared with the integration
 
 See `.mcp-example.json` for the config template.
 
 ### Workspace Example:
 
-**Workspace URL :**  https://www.notion.so/Claude-Workspace-2f801e7f802c80cda17cd058fe3d60b3
+**Workspace URL:** https://www.notion.so/Claude-Workspace-2f801e7f802c80cda17cd058fe3d60b3
 
 ---
 
@@ -276,13 +318,22 @@ See `.mcp-example.json` for the config template.
 These commands can be found in Claude Code CLI:
 
 ```
-/researcher  →  Gathers facts, creates research brief
+/researcher  →  Gathers facts using parallel sub-agents, creates research brief
      ↓
-/writer      →  Transforms research into blog draft
+/writer      →  Transforms research into blog draft (audience-aware)
      ↓
-/reviewer    →  Polishes and improves the draft
+/reviewer    →  Polishes and improves the draft (checklist-based)
      ↓
-/publisher   →  Publishes to Notion workspace
+/publisher   →  Auto-discovers pages, creates new page, publishes to Notion
 ```
 
 Each skill is independent and can be used standalone or in sequence within Claude Code CLI.
+
+### Skill Highlights
+
+| Skill | Key Feature |
+|-------|-------------|
+| **Researcher** | Spawns parallel sub-agents to research sub-topics simultaneously |
+| **Writer** | Asks for target audience before writing to adapt tone and complexity |
+| **Reviewer** | Uses a comprehensive checklist to ensure quality |
+| **Publisher** | Auto-discovers Notion pages, creates new pages automatically |
