@@ -77,7 +77,7 @@ curl -X POST "https://api.notion.com/v1/pages" \
 
 **Response:** Save the returned `id` field for Step 4.
 
-### Step 4: Add Content in Batches
+### Step 4: Add Content in Batches (Auto-Progress)
 
 Use curl to append content blocks to the new page:
 
@@ -95,11 +95,20 @@ curl -X PATCH "https://api.notion.com/v1/blocks/NEW_PAGE_ID/children" \
   }'
 ```
 
-**Batch size:** 5 blocks maximum per API call. Continue until all content is uploaded.
+**Batch size:** 5 blocks maximum per API call.
+
+**⚠️ IMPORTANT: Auto-Batching Required**
+
+Process ALL batches automatically without pausing for user confirmation:
+
+1. Calculate total batches needed upfront
+2. Execute each batch curl command sequentially in a single response
+3. Only pause if an error occurs that requires user intervention
+4. Display progress inline (e.g., "✅ Batch 1/4 complete") after each successful batch
+
+**DO NOT** ask "Should I continue?" between batches. Complete the entire upload in one continuous flow.
 
 ## Supported Block Types
-
-Using curl with the Notion API directly supports all block types:
 
 | Content Type | Block Type | Example |
 |--------------|------------|---------|
@@ -111,66 +120,7 @@ Using curl with the Notion API directly supports all block types:
 | Code block | `code` | Code snippets |
 | Divider | `divider` | Horizontal line |
 
-### Block Structure Examples
-
-**Paragraph with bold text:**
-```json
-{
-  "object": "block",
-  "type": "paragraph",
-  "paragraph": {
-    "rich_text": [
-      {"type": "text", "text": {"content": "Bold text"}, "annotations": {"bold": true}},
-      {"type": "text", "text": {"content": " and normal text"}}
-    ]
-  }
-}
-```
-
-**Heading:**
-```json
-{
-  "object": "block",
-  "type": "heading_2",
-  "heading_2": {
-    "rich_text": [{"type": "text", "text": {"content": "Section Title"}}]
-  }
-}
-```
-
-**Code block:**
-```json
-{
-  "object": "block",
-  "type": "code",
-  "code": {
-    "rich_text": [{"type": "text", "text": {"content": "const x = 1;"}}],
-    "language": "javascript"
-  }
-}
-```
-
-**Link in text:**
-```json
-{
-  "object": "block",
-  "type": "bulleted_list_item",
-  "bulleted_list_item": {
-    "rich_text": [
-      {"type": "text", "text": {"content": "Source Title", "link": {"url": "https://example.com"}}}
-    ]
-  }
-}
-```
-
-**Divider:**
-```json
-{
-  "object": "block",
-  "type": "divider",
-  "divider": {}
-}
-```
+For detailed JSON structures, see [references/block-structures.md](references/block-structures.md).
 
 ## Error Handling
 
@@ -183,18 +133,23 @@ Using curl with the Notion API directly supports all block types:
 
 ## Progress Tracking
 
-Display progress as batches upload:
+Display progress inline as each batch completes (no user prompts between batches):
 
 ```
 📤 Publishing to Notion
 ━━━━━━━━━━━━━━━━━━━━
 ✅ Page created: "Blog Title"
 
-Uploading content:
+Uploading content (4 batches):
 ✅ Batch 1/4 complete
 ✅ Batch 2/4 complete
-🔄 Batch 3/4 in progress...
+✅ Batch 3/4 complete
+✅ Batch 4/4 complete
+
+All content uploaded successfully.
 ```
+
+**Note:** Progress updates appear after each batch completes. The entire upload runs automatically without requiring user confirmation.
 
 ## Success Output
 
@@ -212,4 +167,5 @@ Uploading content:
 
 ## Reference
 
-See [references/sample-output.md](references/sample-output.md) for detailed examples.
+- [references/sample-output.md](references/sample-output.md) — Publishing workflow and output examples
+- [references/block-structures.md](references/block-structures.md) — JSON structure for Notion blocks
