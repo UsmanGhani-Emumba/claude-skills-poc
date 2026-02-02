@@ -3,7 +3,8 @@
     "allow": [
       "WebSearch",
       "mcp__notion__API-post-search",
-      "mcp__notion__API-patch-block-children"
+      "mcp__notion__API-patch-block-children",
+      "Bash(curl:*)"
     ]
   },
   "enableAllProjectMcpServers": true,

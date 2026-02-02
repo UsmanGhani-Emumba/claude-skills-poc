@@ -121,16 +121,17 @@ Artificial Intelligence is revolutionizing healthcare across diagnostics, drug d
 - The hidden bias problem in medical AI
 - Real patient stories: lives saved (or complicated) by AI diagnosis
 
-## All Sources
-1. [Nature Medicine - AI in Medical Imaging](https://nature.com/nm) - Peer-reviewed research on AI diagnostics
-2. [FDA AI/ML Medical Devices](https://fda.gov) - Official regulatory database
-3. [McKinsey Healthcare AI Report](https://mckinsey.com) - Industry analysis
-4. [Stanford HAI Healthcare Study](https://hai.stanford.edu) - Bias and ethics research
-5. [JAMA AI Diagnostics Study](https://jama.com) - Clinical outcomes data
-6. [Google Health Research](https://health.google) - Diabetic retinopathy AI
-7. [BioPharma Dive AI Drug Discovery](https://biopharmadive.com) - Pipeline tracking
-8. [HIMSS Digital Health Survey](https://himss.org) - Healthcare executive insights
-9. [WHO AI Ethics Guidelines](https://who.int) - Global policy framework
+## Sources
+
+- [Nature Medicine - AI in Medical Imaging](https://nature.com/nm) - Peer-reviewed research on AI diagnostics
+- [FDA AI/ML Medical Devices](https://fda.gov) - Official regulatory database
+- [McKinsey Healthcare AI Report](https://mckinsey.com) - Industry analysis
+- [Stanford HAI Healthcare Study](https://hai.stanford.edu) - Bias and ethics research
+- [JAMA AI Diagnostics Study](https://jama.com) - Clinical outcomes data
+- [Google Health Research](https://health.google) - Diabetic retinopathy AI
+- [BioPharma Dive AI Drug Discovery](https://biopharmadive.com) - Pipeline tracking
+- [HIMSS Digital Health Survey](https://himss.org) - Healthcare executive insights
+- [WHO AI Ethics Guidelines](https://who.int) - Global policy framework
 ```
 
 ---

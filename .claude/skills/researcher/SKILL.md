@@ -59,8 +59,12 @@ Return your findings in this format:
 - Stat 1 (Source, Year)
 
 ### Sources
-- [Title](URL)
+- [Source Title 1](URL)
+- [Source Title 2](URL)
+- [Source Title 3](URL)
 ```
+
+⚠️ **IMPORTANT: Sources must be formatted as a BULLETED LIST, one per line. NEVER use inline comma-separated format.**
 
 ### Phase 3: Compilation
 
@@ -113,10 +117,38 @@ Brief overview synthesizing all sub-topic research (2-3 sentences)
 - Angle worth exploring 1
 - Angle worth exploring 2
 
-## All Sources
-1. [Title](URL) - Brief description
-2. [Title](URL) - Brief description
+## Sources
+
+**IMPORTANT: Always format sources as a bulleted list, one source per line. NEVER use inline comma-separated format.**
+
+- [Source Title 1](https://example.com/1) - Brief description
+- [Source Title 2](https://example.com/2) - Brief description
+- [Source Title 3](https://example.com/3) - Brief description
+- [Source Title 4](https://example.com/4) - Brief description
 ```
+
+## Source Formatting Rules
+
+⚠️ **CRITICAL: Sources must ALWAYS be formatted as a bulleted markdown list.**
+
+### ✅ CORRECT Format (Bulleted List):
+```
+Sources:
+- [Gartner AI Predictions](https://gartner.com/...)
+- [Anthropic Agent Skills](https://anthropic.com/...)
+- [LangChain Multi-Agent Architecture](https://langchain.com/...)
+```
+
+### ❌ WRONG Format (Inline Comma-Separated):
+```
+Sources: Gartner AI Predictions, Anthropic Agent Skills, LangChain Multi-Agent Architecture
+```
+
+The bulleted list format is required because:
+1. Each source is clearly distinguishable
+2. URLs are properly clickable
+3. Easier to scan and reference
+4. Consistent with markdown best practices
 
 ## Example: Parallel Sub-Agent Invocation
 
