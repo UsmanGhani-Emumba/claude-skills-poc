@@ -9,13 +9,7 @@
       "WebFetch(domain:playwright.dev)",
       "Bash(gh api:*)",
       "WebFetch(domain:api.github.com)",
-      "WebFetch(domain:www.selenium.dev)",
-      "WebFetch(domain:webdriver.io)",
-      "Bash(cmd /c \"gh api repos/SeleniumHQ/selenium --jq \"\"{stars: .stargazers_count, forks: .forks_count, open_issues: .open_issues_count, language: .language, created: .created_at, updated: .pushed_at, watchers: .watchers_count}\"\"\")",
-      "Bash(powershell -Command \"gh api repos/SeleniumHQ/selenium --jq ''{stars: .stargazers_count, forks: .forks_count, open_issues: .open_issues_count, language: .language, created: .created_at, updated: .pushed_at, watchers: .watchers_count}''\")",
-      "Bash(powershell -Command \"Get-Command gh -ErrorAction SilentlyContinue | Select-Object Source; where.exe gh\")",
-      "Bash(powershell -Command \"Invoke-RestMethod -Uri ''https://api.github.com/repos/SeleniumHQ/selenium'' | ConvertTo-Json\")",
-      "Bash(powershell -Command \"Invoke-RestMethod -Uri ''https://api.github.com/repos/webdriverio/webdriverio'' | ConvertTo-Json\")"
+      "Bash(gh repo view:*)"
     ]
   },
   "enableAllProjectMcpServers": true,
