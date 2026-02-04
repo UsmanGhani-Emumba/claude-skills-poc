@@ -49,7 +49,25 @@ Elevate draft content to publication-ready quality through systematic review and
 - [ ] Grammar and spelling correct
 - [ ] Headings are scannable and informative
 - [ ] Emphasis used sparingly (bold, italics)
-- [ ] Sources cited properly
+- [ ] **Sources formatted as bulleted list** (NOT inline comma-separated)
+
+## Source Formatting (CRITICAL)
+
+⚠️ **Sources must be formatted as a bulleted list. If they are inline comma-separated, FIX THEM.**
+
+### ✅ CORRECT:
+```markdown
+**Sources:**
+
+- [McKinsey Future of Work Report](https://mckinsey.com/...)
+- [Buffer State of Remote Work](https://buffer.com/...)
+- [Gallup Workplace Trends](https://gallup.com/...)
+```
+
+### ❌ WRONG (fix this immediately):
+```markdown
+Sources: McKinsey Future of Work Report, Buffer State of Remote Work, Gallup Workplace Trends
+```
 
 ## Review Workflow
 

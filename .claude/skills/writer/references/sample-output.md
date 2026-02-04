@@ -40,7 +40,13 @@ But they're fighting the last war. The future isn't remote vs. office. It's inte
 The workers have tasted freedom. The genie isn't going back in the bottle. The only question is which companies figure that out first—and which keep pushing until their best people walk out the door.
 
 ---
-*Sources: McKinsey Future of Work Report, Buffer State of Remote Work 2024, Gallup Workplace Trends, Stanford WFH Research*
+
+**Sources:**
+
+- [McKinsey Future of Work Report](https://mckinsey.com/future-of-work)
+- [Buffer State of Remote Work 2024](https://buffer.com/state-of-remote-work)
+- [Gallup Workplace Trends](https://gallup.com/workplace)
+- [Stanford WFH Research](https://stanford.edu/wfh-research)
 ```
 
 ## What Makes This Good

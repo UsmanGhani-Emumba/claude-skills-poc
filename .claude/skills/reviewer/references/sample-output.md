@@ -42,7 +42,13 @@ The smartest companies will gather people when it genuinely matters: for brainst
 The genie left the bottle three years ago. It's not going back. The only question remaining: which companies adapt first—and which keep pushing until their best people finally call their bluff and walk.
 
 ---
-*Sources: McKinsey Future of Work Report, Buffer State of Remote Work 2024, Gallup Workplace Trends, Stanford WFH Research*
+
+**Sources:**
+
+- [McKinsey Future of Work Report](https://mckinsey.com/future-of-work)
+- [Buffer State of Remote Work 2024](https://buffer.com/state-of-remote-work)
+- [Gallup Workplace Trends](https://gallup.com/workplace)
+- [Stanford WFH Research](https://stanford.edu/wfh-research)
 ```
 
 ---

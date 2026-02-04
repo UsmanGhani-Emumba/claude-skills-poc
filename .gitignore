@@ -18,3 +18,6 @@ Thumbs.db
 
 # Node (if using npm packages)
 node_modules/
+
+nul
+.claude/skills/writer/output
