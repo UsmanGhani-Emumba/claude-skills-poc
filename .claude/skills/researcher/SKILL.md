@@ -170,8 +170,53 @@ Then spawn 5 parallel Task agents in ONE message:
 - Agent 5: Research "Regulatory & Ethical Considerations"
 ```
 
+## Advanced: Tool-Based Parallel Research
+
+Use tool-based parallelization when a sub-topic requires **more than one tool** to gather information. Each sub-topic spawns **one agent per tool type needed**, determined dynamically.
+
+### When to Use Tool-Based Mode
+
+Use Tool-Based Mode for any sub-topic that needs multiple tools:
+
+```
+Sub-topic needs:
+├── Only WebSearch → Standard Mode (1 agent)
+├── WebFetch + WebSearch → Tool-Based Mode (2 agents)
+├── WebSearch + Bash (gh) → Tool-Based Mode (2 agents)
+└── WebFetch + WebSearch + Bash → Tool-Based Mode (3 agents)
+```
+
+**Rule: If a sub-topic requires 2+ tools → spawn separate agents per tool**
+
+### Available Tools
+
+| Tool | What It Does | When to Use |
+|------|--------------|-------------|
+| **WebFetch** | Fetches specific URLs | Known documentation URLs, GitHub READMEs, API references |
+| **WebSearch** | Searches the web | Tutorials, comparisons, community opinions, recent articles |
+| **Bash (gh CLI)** | GitHub API queries | Repository stats, issues, releases, contributors |
+
+### Dynamic Tool Selection
+
+**The number of agents per sub-topic depends on which tools are relevant:**
+
+```
+For each sub-topic, ask:
+├── Are there known documentation URLs to fetch? → Add WebFetch agent
+├── Do we need to search for articles/tutorials? → Add WebSearch agent
+└── Do we need GitHub repo data (stars, issues)? → Add Bash (gh) agent
+
+Agents per sub-topic = Count of relevant tools (1, 2, or 3)
+Total agents = Sum of tools needed across all sub-topics
+```
+
+### Reference
+
+For detailed implementation, templates, and examples, see [references/tool-based-research.md](references/tool-based-research.md)
+
 ## Quality Criteria
 
+### Standard Mode
 - Minimum 3 sub-topics researched in parallel
 - Each sub-topic has at least 2 distinct sources
 - Total of 8+ distinct, credible sources across all sub-topics
@@ -180,6 +225,17 @@ Then spawn 5 parallel Task agents in ONE message:
 - Flag any conflicting information found across sub-topics
 - Note gaps where information was not found
 - Identify at least 2 cross-cutting insights
+
+### Tool-Based Mode (Additional Criteria)
+- Tools are selected dynamically based on sub-topic requirements
+- Each sub-topic spawns 1-3 agents depending on tools needed
+- WebFetch used when documentation URLs are known
+- WebSearch used when articles/tutorials are needed
+- Bash (gh CLI) used when GitHub repository data is needed
+- Official documentation is included for any tool/framework being discussed
+- For comparison topics: both/all items being compared have equivalent source coverage
+- Code examples are extracted from official docs via WebFetch when available
+- Total agents = sum of tools needed across all sub-topics
 
 ## Reference
 
