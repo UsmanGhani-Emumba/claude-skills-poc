@@ -4,12 +4,12 @@
       "WebSearch",
       "mcp__notion__API-post-search",
       "mcp__notion__API-patch-block-children",
+      "WebSearch",
+      "WebFetch",
+      "Bash(gh:*)",
       "Bash(curl:*)",
-      "WebFetch(domain:docs.cypress.io)",
-      "WebFetch(domain:playwright.dev)",
-      "Bash(gh api:*)",
       "WebFetch(domain:api.github.com)",
-      "Bash(gh repo view:*)"
+      "Bash(python -c:*)"
     ]
   },
   "enableAllProjectMcpServers": true,
