@@ -18,11 +18,43 @@ Gather comprehensive, accurate information on a topic to serve as the foundation
 Parallel sub-agents exist to **maximize quality while saving time** - not to minimize agent usage. Always spawn all necessary agents for comprehensive coverage.
 
 **Rules:**
-1. Always evaluate which tools each sub-topic requires (WebSearch, WebFetch, Bash)
-2. Spawn separate agents per tool type when a sub-topic needs multiple tools
+1. Always evaluate which tools each sub-topic requires (WebSearch, WebFetch, Bash, etc.)
+2. **ONE AGENT PER TOOL TYPE** - If a sub-topic needs multiple tools, spawn separate agents for each tool
 3. More agents = better coverage (parallel execution means no time penalty)
 
-See [Parallel Invocation Reference](references/parallel-invocation.md) for decision process and examples.
+### Research Limits (Prevent Long Loops)
+
+To ensure focused, quality research without getting stuck:
+
+| Constraint | Limit |
+|------------|-------|
+| Distinct tools per sub-topic | Max 5 |
+| Results/calls per tool | Max 5 |
+
+**Example:** For a sub-topic using WebSearch, perform up to 5 searches and use the top results. Don't endlessly search for more - quality over quantity.
+
+### Agent-per-Distinct-Tool Example
+
+**Sub-topic:** "GitHub Repository Statistics"
+
+**Distinct tools needed:** WebSearch + Bash (2 distinct tool types)
+
+**WRONG (1 agent using both tools sequentially):**
+```
+❌ Agent 1: WebSearch + Bash (gh CLI)
+```
+
+**CORRECT (2 agents in parallel, one per distinct tool):**
+```
+✅ Agent 1a: WebSearch only → "Find articles about repo community growth" (can make multiple searches)
+✅ Agent 1b: Bash only → "Get live stars, forks, issues counts" (can run multiple commands)
+```
+
+**Note:** If Agent 1a needs 3 different WebSearch queries, that's still 1 agent making 3 calls - NOT 3 agents.
+
+Both agents run simultaneously, results are merged in Phase 3.
+
+See [Parallel Invocation Reference](references/parallel-invocation.md) for more examples.
 
 ---
 
@@ -42,56 +74,72 @@ See [Parallel Invocation Reference](references/parallel-invocation.md) for decis
 
 ### Phase 2: Parallel Sub-Agent Research
 
-3. **Evaluate tools per sub-topic** - For each sub-topic, determine which tools are needed:
-   - WebFetch: Known documentation URLs, official sources
-   - WebSearch: Articles, tutorials, comparisons
-   - Bash (gh CLI): GitHub repository data, stats
+3. **Create agent assignment table** - For each sub-topic, list the DISTINCT tools needed (one row per distinct tool type):
 
-4. **Spawn parallel research agents** - Use the Task tool to launch multiple sub-agents simultaneously:
+   | Sub-topic | Distinct Tool | Agent ID | Research Goal |
+   |-----------|---------------|----------|---------------|
+   | Framework A overview | WebSearch | 1 | Find adoption articles |
+   | Framework B overview | WebSearch | 2 | Find comparison posts |
+   | Official docs | WebFetch | 3 | Extract API patterns from docs.example.com |
+   | GitHub stats | WebSearch | 4 | Find articles about community growth |
+   | GitHub stats | Bash | 5 | Run gh CLI for live star/fork counts |
+
+   **Key rules:**
+   - One agent per **distinct tool type** per sub-topic
+   - Multiple calls of the same tool = 1 agent (e.g., 3 WebSearches = 1 WebSearch agent)
+   - Different tool types = separate agents (e.g., WebSearch + Bash = 2 agents)
+
+4. **Count total agents** - Simply count the rows in your table:
+   ```
+   Total Agents = Number of rows in assignment table
+   ```
+
+5. **Spawn ALL agents in a SINGLE message** - Use the Task tool to launch all sub-agents simultaneously:
 
 ```
-For each sub-topic, use the Task tool with:
+For each agent, use the Task tool with:
 - subagent_type: "general-purpose"
 - run_in_background: false (to get results back)
-- Launch ALL sub-agents in a SINGLE message for true parallelism
+- Launch ALL agents in ONE message for true parallelism
 ```
+
+⚠️ **CRITICAL:** Do NOT combine multiple tools into one agent. Each tool type = separate agent.
 
 **Sub-agent prompt template:**
 ```
-Research the following sub-topic thoroughly for a blog post:
+Research the following sub-topic for a blog post:
 
 Main Topic: [MAIN_TOPIC]
 Sub-topic: [SUB_TOPIC]
+Research Goal: [SPECIFIC_GOAL]
 
-Perform 2-3 targeted web searches to gather:
-- Key facts and definitions
-- Recent developments (2024-2025)
-- Statistics or data points with sources
-- Expert perspectives or quotes
+**TOOL RESTRICTION: Use ONLY [TOOL_NAME] for this research.**
+- Make up to 5 calls with [TOOL_NAME]
+- Do NOT use other tools - separate agents handle those
 
 Return your findings in this format:
 
-## [SUB_TOPIC]
+## [SUB_TOPIC] (via [TOOL_NAME])
 
 ### Key Findings
 - Finding 1 (Source: ...)
-- Finding 2 (Source: ...)
-
-### Statistics
-- Stat 1 (Source, Year)
 
 ### Sources
-- [Source Title 1](URL)
-- [Source Title 2](URL)
+- [Source Title](URL) or command/method used
 ```
+
+**Example goals by research type:**
+- Web research: "Find recent articles about framework adoption trends and developer sentiment"
+- Documentation: "Extract key features and API patterns from the official docs"
+- GitHub data: "Get live repository statistics (stars, forks, issues, contributors) using gh CLI"
 
 See [Tool-Based Research Reference](references/tool-based-research.md) for tool-specific prompt templates.
 
 ### Phase 3: Compilation
 
-5. **Compile all sub-agent results** - Gather outputs from all parallel agents
-6. **Synthesize into unified brief** - Merge findings, remove duplicates, organize coherently
-7. **Add cross-cutting insights** - Identify connections between sub-topics
+6. **Compile all sub-agent results** - Gather outputs from all parallel agents
+7. **Synthesize into unified brief** - Merge findings, remove duplicates, organize coherently
+8. **Add cross-cutting insights** - Identify connections between sub-topics
 
 ---
 
