@@ -72,9 +72,24 @@ See [Parallel Invocation Reference](references/parallel-invocation.md) for more 
    - Future outlook/predictions
    - Practical applications
 
+3. **Check for Dependencies (Critical)**
+   - Ask: "Does any sub-topic require output *from* another sub-topic?"
+   - **If YES:** Run these sequentially (e.g., "Find GitHub URL" then "Clone Repo").
+   - **If NO:** Run these in parallel.
+
+   **Example of dependent tasks (Sequential):**
+   ```
+   ❌ "Find GitHub URL" (Agent A) + "Clone it" (Agent B) → MUST be Sequential
+   ```
+
+   **Example of independent tasks (Parallel):**
+   ```
+   ✅ "Search articles" (Agent A) + "Get GitHub stats" (Agent B) → Safe to Parallelize
+   ```
+
 ### Phase 2: Parallel Sub-Agent Research
 
-3. **Create agent assignment table** - For each sub-topic, list the DISTINCT tools needed (one row per distinct tool type):
+4. **Create agent assignment table** - For each sub-topic, list the DISTINCT tools needed (one row per distinct tool type):
 
    | Sub-topic | Distinct Tool | Agent ID | Research Goal |
    |-----------|---------------|----------|---------------|
@@ -85,16 +100,16 @@ See [Parallel Invocation Reference](references/parallel-invocation.md) for more 
    | GitHub stats | Bash | 5 | Run gh CLI for live star/fork counts |
 
    **Key rules:**
-   - One agent per **distinct tool type** per sub-topic
-   - Multiple calls of the same tool = 1 agent (e.g., 3 WebSearches = 1 WebSearch agent)
-   - Different tool types = separate agents (e.g., WebSearch + Bash = 2 agents)
+   - One agent per **distinct tool type** per sub-topic.
+   - **Same Tool, Multiple Calls:** (e.g., `search("query1")`, `search("query2")`) → **1 Agent** (Agent loop handles iteration).
+   - **Different Tools:** (e.g., `search()` + `shell()`) → **2 Agents**.
 
-4. **Count total agents** - Simply count the rows in your table:
+5. **Count total agents** - Simply count the rows in your table:
    ```
    Total Agents = Number of rows in assignment table
    ```
 
-5. **Spawn ALL agents in a SINGLE message** - Use the `browser_subagent` tool to launch all sub-agents simultaneously.
+6. **Spawn ALL agents in a SINGLE message** - Use the `browser_subagent` tool to launch all sub-agents simultaneously.
 
 ⚠️ **Parallelism Rule**: To ensure true concurrent execution, every `browser_subagent` call in this batch must have `waitForPreviousTools: false` (or be sent in the same parallel block).
 
@@ -140,10 +155,20 @@ See [Tool-Based Research Reference](references/tool-based-research.md) for tool-
 
 ### Phase 3: Compilation
 
-6. **Compile all sub-agent results** - Gather outputs from all parallel agents
-7. **Automation**: Use `SafeToAutoRun: true` for non-destructive research commands (e.g., `ls`, `grep`, `curl` for public data, or running localized discovery scripts).
-8. **Synthesize into unified brief** - Merge findings, remove duplicates, organize coherently
-9. **Add cross-cutting insights** - Identify connections between sub-topics
+7. **Compile all sub-agent results** - Gather outputs from all parallel agents
+8. **Automation**: Use `SafeToAutoRun: true` for non-destructive research commands (e.g., `ls`, `grep`, `curl` for public data, or running localized discovery scripts).
+9. **Synthesize into unified brief** - Merge findings, remove duplicates, organize coherently
+10. **Resolve data conflicts** - Different sources may contradict each other:
+
+   | Source Type | Data Nature | Trust Level |
+   |-------------|-------------|-------------|
+   | CLI tools (Bash/gh) | Current/live state | **High** (exact numbers) |
+   | WebSearch | Historical/contextual | Medium (may be outdated) |
+   | WebFetch (docs) | Official/authoritative | High (but check version) |
+
+   > **Conflict Resolution:** If CLI data contradicts Web Search data, trust CLI tools for exact numbers (they reflect current state). Note discrepancies in the brief.
+
+11. **Add cross-cutting insights** - Identify connections between sub-topics
 
 ---
 

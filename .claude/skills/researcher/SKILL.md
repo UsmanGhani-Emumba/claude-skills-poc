@@ -71,10 +71,25 @@ See [Parallel Invocation Reference](references/parallel-invocation.md) for more 
    - Challenges/problems
    - Future outlook/predictions
    - Practical applications
+3. **Check for dependencies** - Are any tools dependent on outputs of others?
+   - **If YES** → Run dependent tasks **sequentially** (not in parallel)
+   - **If NO** → Safe to parallelize all agents
+
+   **Example of dependent tasks (CANNOT parallelize):**
+   ```
+   ❌ "Find GitHub URL for Project X" (Agent A) + "Clone it" (Agent B)
+      → Agent B needs Agent A's output first → Run sequentially
+   ```
+
+   **Example of independent tasks (CAN parallelize):**
+   ```
+   ✅ "Search articles about Project X" (Agent A) + "Get GitHub stats" (Agent B)
+      → Neither needs the other's output → Run in parallel
+   ```
 
 ### Phase 2: Parallel Sub-Agent Research
 
-3. **Create agent assignment table** - For each sub-topic, list the DISTINCT tools needed (one row per distinct tool type):
+4. **Create agent assignment table** - For each sub-topic, list the DISTINCT tools needed (one row per distinct tool type):
 
    | Sub-topic | Distinct Tool | Agent ID | Research Goal |
    |-----------|---------------|----------|---------------|
@@ -89,12 +104,16 @@ See [Parallel Invocation Reference](references/parallel-invocation.md) for more 
    - Multiple calls of the same tool = 1 agent (e.g., 3 WebSearches = 1 WebSearch agent)
    - Different tool types = separate agents (e.g., WebSearch + Bash = 2 agents)
 
-4. **Count total agents** - Simply count the rows in your table:
+   > **Clarification: Tool vs Function Call**
+   > - **Same tool, multiple calls** (e.g., `search("q1")`, `search("q2")`) → **1 Agent** (the agent loop handles iteration internally)
+   > - **Different tools** (e.g., `search()` + `shell()`) → **2 Agents** (cannot share context efficiently)
+
+5. **Count total agents** - Simply count the rows in your table:
    ```
    Total Agents = Number of rows in assignment table
    ```
 
-5. **Spawn ALL agents in a SINGLE message** - Use the Task tool to launch all sub-agents simultaneously:
+6. **Spawn ALL agents in a SINGLE message** - Use the Task tool to launch all sub-agents simultaneously:
 
 ```
 For each agent, use the Task tool with:
@@ -137,9 +156,19 @@ See [Tool-Based Research Reference](references/tool-based-research.md) for tool-
 
 ### Phase 3: Compilation
 
-6. **Compile all sub-agent results** - Gather outputs from all parallel agents
-7. **Synthesize into unified brief** - Merge findings, remove duplicates, organize coherently
-8. **Add cross-cutting insights** - Identify connections between sub-topics
+7. **Compile all sub-agent results** - Gather outputs from all parallel agents
+8. **Synthesize into unified brief** - Merge findings, remove duplicates, organize coherently
+9. **Resolve data conflicts** - Different sources may contradict each other:
+
+   | Source Type | Data Nature | Trust Level |
+   |-------------|-------------|-------------|
+   | CLI tools (Bash/gh) | Current/live state | **High** (exact numbers) |
+   | WebSearch | Historical/contextual | Medium (may be outdated) |
+   | WebFetch (docs) | Official/authoritative | High (but check version) |
+
+   > **Conflict Resolution:** If CLI data contradicts Web Search data, trust CLI tools for exact numbers (they reflect current state). Note discrepancies in the brief.
+
+10. **Add cross-cutting insights** - Identify connections between sub-topics
 
 ---
 
