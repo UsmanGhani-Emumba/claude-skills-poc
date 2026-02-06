@@ -15,13 +15,13 @@ After analyzing the main topic "AI in Healthcare", the following sub-topics were
 
 ## Phase 2: Parallel Sub-Agent Execution
 
-Four sub-agents were spawned simultaneously using the Task tool:
+Four sub-agents were spawned simultaneously using the `browser_subagent` tool:
 
 ```
-Task Agent 1 → Researching "AI Diagnostics & Medical Imaging"
-Task Agent 2 → Researching "Drug Discovery & Development"
-Task Agent 3 → Researching "Patient Care & Virtual Health"
-Task Agent 4 → Researching "Regulatory & Ethical Considerations"
+browser_subagent 1 → Researching "AI Diagnostics & Medical Imaging"
+browser_subagent 2 → Researching "Drug Discovery & Development"
+browser_subagent 3 → Researching "Patient Care & Virtual Health"
+browser_subagent 4 → Researching "Regulatory & Ethical Considerations"
 ```
 
 ## Phase 3: Compiled Output

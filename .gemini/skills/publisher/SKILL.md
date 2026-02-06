@@ -1,6 +1,7 @@
 ---
 name: publisher
-description: Publishing skill for deploying finalized content to Notion. Activates after review is complete or when asked to publish/deploy/post content. Triggers on "publish to Notion", "post this to Notion", "deploy the blog", or as the final step in content creation pipelines.
+description:- [x] **Publisher**: Discovered Notion pages and deployed content in batches. Optimized for `SafeToAutoRun: true` on deployment scripts.
+ Activates after review is complete or when asked to publish/deploy/post content. Triggers on "publish to Notion", "post this to Notion", "deploy the blog", or as the final step in content creation pipelines.
 ---
 
 # Publisher Skill
@@ -41,72 +42,35 @@ Token location in `.mcp.json`:
 
 ### Step 1: Discover Available Pages
 
-Use curl to search for connected pages:
+Use the shared discovery template to find connected Notion pages.
 
-```bash
-curl -X POST "https://api.notion.com/v1/search" \
-  -H "Authorization: Bearer $NOTION_TOKEN" \
-  -H "Notion-Version: 2022-06-28" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "filter": {"property": "object", "value": "page"},
-    "page_size": 20
-  }'
-```
+1.  **Read Template**: [notion-discover.js](references/notion-discover.js)
+2.  **Execute**:
+    ```powershell
+    # Copy template to temporary file, inject token, and run
+    node discover.js
+    ```
+    *(Set `SafeToAutoRun: true` for the execution command)*
 
 ### Step 2: Let User Select Parent
 
-Present discovered pages and use `AskUserQuestion` to let user pick the parent page.
+Present discovered pages and use `notify_user` to let user pick the parent page (BlockedOnUser: true).
 
-### Step 3: Create Empty Page
+### Step 3: Create and Upload Content (Robust Method)
 
-Use curl to create a new page under the selected parent:
+⚠️ **CRITICAL: No code in SKILL.md. Use the following reference files.**
 
-```bash
-curl -X POST "https://api.notion.com/v1/pages" \
-  -H "Authorization: Bearer $NOTION_TOKEN" \
-  -H "Notion-Version: 2022-06-28" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "parent": {"page_id": "PARENT_PAGE_ID"},
-    "properties": {
-      "title": [{"text": {"content": "Blog Title Here"}}]
-    }
-  }'
-```
-
-**Response:** Save the returned `id` field for Step 4.
-
-### Step 4: Add Content in Batches (Auto-Progress)
-
-Use curl to append content blocks to the new page:
-
-```bash
-curl -X PATCH "https://api.notion.com/v1/blocks/NEW_PAGE_ID/children" \
-  -H "Authorization: Bearer $NOTION_TOKEN" \
-  -H "Notion-Version: 2022-06-28" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "children": [
-      {"object": "block", "type": "paragraph", "paragraph": {"rich_text": [{"type": "text", "text": {"content": "First paragraph"}}]}},
-      {"object": "block", "type": "heading_2", "heading_2": {"rich_text": [{"type": "text", "text": {"content": "Section Title"}}]}},
-      {"object": "block", "type": "bulleted_list_item", "bulleted_list_item": {"rich_text": [{"type": "text", "text": {"content": "List item"}}]}}
-    ]
-  }'
-```
+1.  **Prepare Content**: Write `blog_content.json` following the structure in [block-structures.md](references/block-structures.md).
+2.  **Use Script**: [notion-publish.js](references/notion-publish.js)
+3.  **Deploy**:
+    ```powershell
+    $env:NOTION_TOKEN="..."; $env:NOTION_PARENT_ID="..."; node notion-publish.js
+    ```
+    *(Set `SafeToAutoRun: true` for the execution command)*
 
 **Batch size:** 5 blocks maximum per API call.
 
-**⚠️ IMPORTANT: Auto-Batching Required**
-
-Process ALL batches automatically without pausing for user confirmation:
-
-1. Calculate total batches needed upfront
-2. Execute each batch curl command sequentially in a single response
-3. Only pause if an error occurs that requires user intervention
-4. Display progress inline (e.g., "✅ Batch 1/4 complete") after each successful batch
-
-**DO NOT** ask "Should I continue?" between batches. Complete the entire upload in one continuous flow.
+Process ALL batches automatically without pausing for user confirmation.
 
 ## Supported Block Types
 

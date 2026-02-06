@@ -94,13 +94,16 @@ See [Parallel Invocation Reference](references/parallel-invocation.md) for more 
    Total Agents = Number of rows in assignment table
    ```
 
-5. **Spawn ALL agents in a SINGLE message** - Use the Task tool to launch all sub-agents simultaneously:
+5. **Spawn ALL agents in a SINGLE message** - Use the `browser_subagent` tool to launch all sub-agents simultaneously.
+
+⚠️ **Parallelism Rule**: To ensure true concurrent execution, every `browser_subagent` call in this batch must have `waitForPreviousTools: false` (or be sent in the same parallel block).
 
 ```
-For each agent, use the Task tool with:
-- subagent_type: "general-purpose"
-- run_in_background: false (to get results back)
-- Launch ALL agents in ONE message for true parallelism
+For each agent, use the browser_subagent tool with:
+- TaskName: "[SUB_TOPIC] Research"
+- RecordingName: "[sub_topic]_research"
+- Task: Highly detailed research prompt
+- waitForPreviousTools: false (CRITICAL for simultaneous execution)
 ```
 
 ⚠️ **CRITICAL:** Do NOT combine multiple tools into one agent. Each tool type = separate agent.
@@ -138,8 +141,9 @@ See [Tool-Based Research Reference](references/tool-based-research.md) for tool-
 ### Phase 3: Compilation
 
 6. **Compile all sub-agent results** - Gather outputs from all parallel agents
-7. **Synthesize into unified brief** - Merge findings, remove duplicates, organize coherently
-8. **Add cross-cutting insights** - Identify connections between sub-topics
+7. **Automation**: Use `SafeToAutoRun: true` for non-destructive research commands (e.g., `ls`, `grep`, `curl` for public data, or running localized discovery scripts).
+8. **Synthesize into unified brief** - Merge findings, remove duplicates, organize coherently
+9. **Add cross-cutting insights** - Identify connections between sub-topics
 
 ---
 
