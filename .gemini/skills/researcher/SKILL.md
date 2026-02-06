@@ -101,8 +101,9 @@ See [Parallel Invocation Reference](references/parallel-invocation.md) for more 
 
    **Key rules:**
    - One agent per **distinct tool type** per sub-topic.
+   - A sub-topic can use **up to 5 different tools** → up to 5 agents for that sub-topic.
    - **Same Tool, Multiple Calls:** (e.g., `search("query1")`, `search("query2")`) → **1 Agent** (Agent loop handles iteration).
-   - **Different Tools:** (e.g., `search()` + `shell()`) → **2 Agents**.
+   - **Different Tools:** (e.g., `search()` + `shell()`) → **2 Agents** (each tool gets its own agent).
 
 5. **Count total agents** - Simply count the rows in your table:
    ```
