@@ -24,3 +24,5 @@ nul
 .claude/logs/
 __pycache__/
 *.pyc
+
+models.txt

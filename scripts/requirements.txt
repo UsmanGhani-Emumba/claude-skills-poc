@@ -1,11 +1,11 @@
-# Core — required for the instrumented agent
+# Core — required for both Claude and Gemini instrumented agents
 anthropic>=0.40.0
 httpx>=0.27.0
 beautifulsoup4>=4.12.0
 python-dotenv>=1.0.0
+google-generativeai>=0.8.3
 
-# Arize Phoenix observability — optional, requires Python <3.14
-# Install these for cloud/local tracing; the agent still works without them
-# (metrics are always logged locally to .claude/logs/arize_metrics.jsonl)
-# arize-phoenix>=8.0.0
+# Arize Phoenix observability
+# arize-phoenix>=4.5.0
+# openinference-instrumentation-google-generativeai>=0.1.0
 # openinference-instrumentation-anthropic>=0.1.0
