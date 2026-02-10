@@ -7,7 +7,7 @@ description: Research skill for gathering facts, data, and sources on a given to
 
 ## Purpose
 
-Gather comprehensive, accurate information on a topic to serve as the foundation for content creation. Uses **parallel sub-agents** to research multiple sub-topics simultaneously for faster, more thorough research.
+Gather comprehensive, accurate information on a topic to serve as the foundation for content creation. Uses **parallel instrumented sub-agents** to research multiple sub-topics simultaneously for faster, more thorough research — with full Arize observability.
 
 ---
 
@@ -18,7 +18,7 @@ Gather comprehensive, accurate information on a topic to serve as the foundation
 Parallel sub-agents exist to **maximize quality while saving time** - not to minimize agent usage. Always spawn all necessary agents for comprehensive coverage.
 
 **Rules:**
-1. Always evaluate which tools each sub-topic requires (WebSearch, WebFetch, Bash, etc.)
+1. Always evaluate which tools each sub-topic requires (web_search, web_fetch, github_cli)
 2. **ONE AGENT PER TOOL TYPE** - If a sub-topic needs multiple tools, spawn separate agents for each tool
 3. More agents = better coverage (parallel execution means no time penalty)
 
@@ -31,26 +31,24 @@ To ensure focused, quality research without getting stuck:
 | Distinct tools per sub-topic | Max 5 |
 | Results/calls per tool | Max 5 |
 
-**Example:** For a sub-topic using WebSearch, perform up to 5 searches and use the top results. Don't endlessly search for more - quality over quantity.
+**Example:** For a sub-topic using web_search, the agent performs up to 5 searches and uses the top results. Don't endlessly search for more - quality over quantity.
 
 ### Agent-per-Distinct-Tool Example
 
 **Sub-topic:** "GitHub Repository Statistics"
 
-**Distinct tools needed:** WebSearch + Bash (2 distinct tool types)
+**Distinct tools needed:** web_search + github_cli (2 distinct tool types)
 
-**WRONG (1 agent using both tools sequentially):**
+**WRONG (1 agent using both tools):**
 ```
-❌ Agent 1: WebSearch + Bash (gh CLI)
+❌ Agent 1: web_search + github_cli
 ```
 
 **CORRECT (2 agents in parallel, one per distinct tool):**
 ```
-✅ Agent 1a: WebSearch only → "Find articles about repo community growth" (can make multiple searches)
-✅ Agent 1b: Bash only → "Get live stars, forks, issues counts" (can run multiple commands)
+✅ Agent 1a: web_search only → "Find articles about repo community growth"
+✅ Agent 1b: github_cli only → "Get live stars, forks, issues counts"
 ```
-
-**Note:** If Agent 1a needs 3 different WebSearch queries, that's still 1 agent making 3 calls - NOT 3 agents.
 
 Both agents run simultaneously, results are merged in Phase 3.
 
@@ -87,89 +85,116 @@ See [Parallel Invocation Reference](references/parallel-invocation.md) for more 
       → Neither needs the other's output → Run in parallel
    ```
 
-### Phase 2: Parallel Sub-Agent Research
+### Phase 2: Parallel Instrumented Sub-Agent Research
 
 4. **Create agent assignment table** - For each sub-topic, list the DISTINCT tools needed (one row per distinct tool type):
 
-   | Sub-topic | Distinct Tool | Agent ID | Research Goal |
-   |-----------|---------------|----------|---------------|
-   | Framework A overview | WebSearch | 1 | Find adoption articles |
-   | Framework B overview | WebSearch | 2 | Find comparison posts |
-   | Official docs | WebFetch | 3 | Extract API patterns from docs.example.com |
-   | GitHub stats | WebSearch | 4 | Find articles about community growth |
-   | GitHub stats | Bash | 5 | Run gh CLI for live star/fork counts |
+   | Sub-topic | Tool | Agent ID | Research Goal |
+   |-----------|------|----------|---------------|
+   | Framework A overview | web_search | 1a | Find adoption articles |
+   | Framework B overview | web_search | 2a | Find comparison posts |
+   | Official docs | web_fetch | 3a | Extract API patterns from docs.example.com |
+   | GitHub stats | web_search | 4a | Find articles about community growth |
+   | GitHub stats | github_cli | 4b | Run gh CLI for live star/fork counts |
 
    **Key rules:**
    - One agent per **distinct tool type** per sub-topic
    - A sub-topic can use **up to 5 different tools** → up to 5 agents for that sub-topic
-   - Multiple calls of the same tool = 1 agent (e.g., 3 WebSearches = 1 WebSearch agent)
-   - Different tool types = separate agents (e.g., WebSearch + Bash = 2 agents)
+   - Multiple calls of the same tool = 1 agent (e.g., 3 web searches = 1 web_search agent)
+   - Different tool types = separate agents (e.g., web_search + github_cli = 2 agents)
 
    > **Clarification: Tool vs Function Call**
    > - **Same tool, multiple calls** (e.g., `search("q1")`, `search("q2")`) → **1 Agent** (the agent loop handles iteration internally)
-   > - **Different tools** (e.g., `search()` + `shell()`) → **2 Agents** (each tool gets its own agent)
+   > - **Different tools** (e.g., `web_search` + `github_cli`) → **2 Agents** (each tool gets its own agent)
 
 5. **Count total agents** - Simply count the rows in your table:
    ```
    Total Agents = Number of rows in assignment table
    ```
 
-6. **Spawn ALL agents in a SINGLE message** - Use the Task tool to launch all sub-agents simultaneously:
+6. **Write task prompts** - For each agent, write its task prompt to a file:
 
-```
-For each agent, use the Task tool with:
-- subagent_type: "general-purpose"
-- run_in_background: false (to get results back)
-- Launch ALL agents in ONE message for true parallelism
-```
+   ```
+   Write each agent's task prompt to: .claude/logs/tasks/<agent-id>.txt
+   ```
 
-⚠️ **CRITICAL:** Do NOT combine multiple tools into one agent. Each tool type = separate agent.
+   **Sub-agent prompt template:**
+   ```
+   Research the following sub-topic for a blog post:
 
-**Sub-agent prompt template:**
-```
-Research the following sub-topic for a blog post:
+   Main Topic: [MAIN_TOPIC]
+   Sub-topic: [SUB_TOPIC]
+   Research Goal: [SPECIFIC_GOAL]
 
-Main Topic: [MAIN_TOPIC]
-Sub-topic: [SUB_TOPIC]
-Research Goal: [SPECIFIC_GOAL]
+   Use your available tool to find comprehensive information.
+   Make up to 5 tool calls for thorough coverage.
 
-**TOOL RESTRICTION: Use ONLY [TOOL_NAME] for this research.**
-- Make up to 5 calls with [TOOL_NAME]
-- Do NOT use other tools - separate agents handle those
+   Return your findings in this format:
 
-Return your findings in this format:
+   ## [SUB_TOPIC]
 
-## [SUB_TOPIC] (via [TOOL_NAME])
+   ### Key Findings
+   - Finding 1 (Source: ...)
 
-### Key Findings
-- Finding 1 (Source: ...)
+   ### Sources
+   - [Source Title](URL) or command/method used
+   ```
 
-### Sources
-- [Source Title](URL) or command/method used
-```
+7. **Spawn ALL agents in a SINGLE message** - Use the Bash tool to launch all instrumented Python agents simultaneously:
 
-**Example goals by research type:**
-- Web research: "Find recent articles about framework adoption trends and developer sentiment"
-- Documentation: "Extract key features and API patterns from the official docs"
-- GitHub data: "Get live repository statistics (stars, forks, issues, contributors) using gh CLI"
+   ```
+   For each agent, use the Bash tool with:
+     python scripts/arize_agent.py --task-file .claude/logs/tasks/<agent-id>.txt --tools <tool> --agent-id <id> --skill researcher
+   Launch ALL Bash calls in ONE message for true parallelism.
+   ```
+
+   **Available tools:** `web_search`, `web_fetch`, `github_cli`
+
+   **Example — launching 5 agents in parallel:**
+   ```
+   Bash: python scripts/arize_agent.py --task-file .claude/logs/tasks/1a.txt --tools web_search --agent-id 1a --skill researcher
+   Bash: python scripts/arize_agent.py --task-file .claude/logs/tasks/1b.txt --tools web_fetch  --agent-id 1b --skill researcher
+   Bash: python scripts/arize_agent.py --task-file .claude/logs/tasks/2a.txt --tools web_search --agent-id 2a --skill researcher
+   Bash: python scripts/arize_agent.py --task-file .claude/logs/tasks/3a.txt --tools web_search --agent-id 3a --skill researcher
+   Bash: python scripts/arize_agent.py --task-file .claude/logs/tasks/3b.txt --tools github_cli --agent-id 3b --skill researcher
+   ```
+
+   ⚠️ **CRITICAL:** Do NOT combine multiple tools into one agent. Each tool type = separate agent.
+
+   Each agent outputs **JSON** with `result` (research findings) and `metrics` (tokens, cost, latency, tools).
 
 See [Tool-Based Research Reference](references/tool-based-research.md) for tool-specific prompt templates.
 
-### Phase 3: Compilation
+### Phase 3: Compilation & Metrics
 
-7. **Compile all sub-agent results** - Gather outputs from all parallel agents
-8. **Synthesize into unified brief** - Merge findings, remove duplicates, organize coherently
-9. **Resolve data conflicts** - Different sources may contradict each other:
+8. **Parse agent outputs** - Each Bash call returns JSON. Extract the `result` field from each.
+9. **Compile research brief** - Merge all findings, remove duplicates, organize coherently
+10. **Resolve data conflicts** - Different sources may contradict each other:
 
    | Source Type | Data Nature | Trust Level |
    |-------------|-------------|-------------|
-   | CLI tools (Bash/gh) | Current/live state | **High** (exact numbers) |
-   | WebSearch | Historical/contextual | Medium (may be outdated) |
-   | WebFetch (docs) | Official/authoritative | High (but check version) |
+   | github_cli (Bash/gh) | Current/live state | **High** (exact numbers) |
+   | web_search | Historical/contextual | Medium (may be outdated) |
+   | web_fetch (docs) | Official/authoritative | High (but check version) |
 
-   > **Conflict Resolution:** If CLI data contradicts Web Search data, trust CLI tools for exact numbers (they reflect current state). Note discrepancies in the brief.
+   > **Conflict Resolution:** If CLI data contradicts web search data, trust CLI tools for exact numbers (they reflect current state). Note discrepancies in the brief.
 
-10. **Add cross-cutting insights** - Identify connections between sub-topics
+11. **Add cross-cutting insights** - Identify connections between sub-topics
+12. **Aggregate metrics** - Collect the `metrics` field from each agent output and produce a summary:
+
+   ```markdown
+   ## Research Metrics
+
+   | Agent | Tool | Input Tokens | Output Tokens | Cost | Latency |
+   |-------|------|-------------|---------------|------|---------|
+   | 1a | web_search | 2,100 | 450 | $0.0138 | 8.2s |
+   | 1b | web_fetch | 3,200 | 600 | $0.0186 | 12.1s |
+   | ... | ... | ... | ... | ... | ... |
+   | **Total** | | **X** | **Y** | **$Z** | **Ns** |
+
+   - **Sub-agents spawned:** N
+   - **Distinct tools used:** N (web_search, web_fetch, github_cli)
+   ```
 
 ---
 
@@ -220,6 +245,18 @@ Brief overview synthesizing all sub-topic research (2-3 sentences)
 ## Sources
 - [Source Title](URL) - Brief description
 - [Source Title](URL) - Brief description
+
+---
+
+## Research Metrics
+
+| Agent | Tool | Input Tokens | Output Tokens | Cost | Latency |
+|-------|------|-------------|---------------|------|---------|
+| ... | ... | ... | ... | ... | ... |
+| **Total** | | **X** | **Y** | **$Z** | **Ns** |
+
+- **Sub-agents spawned:** N
+- **Distinct tools used:** N (list)
 ```
 
 **Note:** Format sources as a bulleted list with URLs. The Reviewer skill validates source formatting.

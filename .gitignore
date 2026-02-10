@@ -21,3 +21,6 @@ node_modules/
 
 nul
 .claude/skills/writer/output
+.claude/logs/
+__pycache__/
+*.pyc

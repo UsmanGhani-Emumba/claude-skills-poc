@@ -9,7 +9,9 @@
       "Bash(gh:*)",
       "Bash(curl:*)",
       "WebFetch(domain:api.github.com)",
-      "Bash(python -c:*)"
+      "Bash(python -c:*)",
+      "Bash(python scripts/arize_agent.py:*)",
+      "Bash(python scripts/metrics_summary.py:*)"
     ]
   },
   "enableAllProjectMcpServers": true,

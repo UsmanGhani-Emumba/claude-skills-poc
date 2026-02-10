@@ -7,7 +7,7 @@ description: Editorial review skill for polishing and improving blog drafts. Act
 
 ## Purpose
 
-Elevate draft content to publication-ready quality through systematic review and targeted improvements.
+Elevate draft content to publication-ready quality through systematic review and targeted improvements. Uses an **instrumented Python agent** for the review step to capture Arize observability metrics (tokens, cost, latency).
 
 ## Prerequisites
 
@@ -15,76 +15,96 @@ Elevate draft content to publication-ready quality through systematic review and
 - Research brief (for fact-checking)
 - Target audience (for tone validation)
 
+## Workflow
+
+### Step 1: Gather Context (main conversation)
+
+1. **Verify draft** exists from Writer skill
+2. **Verify research brief** is available for fact-checking
+3. **Confirm target audience** for tone validation
+
+### Step 2: Prepare Review Task
+
+Compose a comprehensive task prompt with ALL context, then write it to a task file.
+
+**Write the following to `.claude/logs/tasks/reviewer-1.txt`:**
+
+```
+You are an expert editorial reviewer. Elevate this draft blog post to publication-ready quality through systematic review.
+
+## Target Audience
+[INSERT: audience name and description]
+
 ## Review Checklist
 
 ### 1. Content Quality
-- [ ] Every claim backed by research — no unsupported assertions
-- [ ] No fluff paragraphs — each adds value
-- [ ] Clear narrative thread from intro to conclusion
-- [ ] Appropriate depth — not too shallow, not overwhelming
-- [ ] Examples are concrete and relatable
+- Every claim backed by research — no unsupported assertions
+- No fluff paragraphs — each adds value
+- Clear narrative thread from intro to conclusion
+- Appropriate depth — not too shallow, not overwhelming
+- Examples are concrete and relatable
 
 ### 2. Audience Alignment
-- [ ] Tone matches target audience
-- [ ] Complexity level appropriate
-- [ ] Jargon explained (or removed for general audience)
-- [ ] Focus areas relevant to audience needs
+- Tone matches target audience
+- Complexity level appropriate
+- Jargon explained (or removed for general audience)
+- Focus areas relevant to audience needs
 
 ### 3. Structure Check
-- [ ] Title is compelling and clear (under 60 characters)
-- [ ] Opening hook grabs attention in first sentence
-- [ ] Clear section flow with smooth transitions
-- [ ] Conclusion is memorable, not generic
-- [ ] 800-1200 words (unless specified otherwise)
+- Title is compelling and clear (under 60 characters)
+- Opening hook grabs attention in first sentence
+- Clear section flow with smooth transitions
+- Conclusion is memorable, not generic
+- 800-1200 words (unless specified otherwise)
 
 ### 4. Style Compliance
-- [ ] Conversational but authoritative tone
-- [ ] 2-4 sentences per paragraph (5 max)
-- [ ] Sentence variety (not all same length)
-- [ ] No filler words (very, really, just, actually)
-- [ ] Active voice preferred over passive
-- [ ] Reading level accessible (8th-10th grade)
+- Conversational but authoritative tone
+- 2-4 sentences per paragraph (5 max)
+- Sentence variety (not all same length)
+- No filler words (very, really, just, actually)
+- Active voice preferred over passive
+- Reading level accessible (8th-10th grade)
 
 ### 5. Technical Polish
-- [ ] Grammar and spelling correct
-- [ ] Headings are scannable and informative
-- [ ] Emphasis used sparingly (bold, italics)
-- [ ] **Sources formatted as bulleted list** (NOT inline comma-separated)
+- Grammar and spelling correct
+- Headings are scannable and informative
+- Emphasis used sparingly (bold, italics)
+- Sources formatted as bulleted list (NOT inline comma-separated)
 
 ## Source Formatting (CRITICAL)
 
-⚠️ **Sources must be formatted as a bulleted list. If they are inline comma-separated, FIX THEM.**
+Sources MUST be formatted as a bulleted list. If they are inline comma-separated, FIX THEM.
 
-### ✅ CORRECT:
-```markdown
+CORRECT:
 **Sources:**
+- [Source Title](URL)
 
-- [McKinsey Future of Work Report](https://mckinsey.com/...)
-- [Buffer State of Remote Work](https://buffer.com/...)
-- [Gallup Workplace Trends](https://gallup.com/...)
-```
+WRONG (fix immediately):
+Sources: Source Title, Another Source
 
-### ❌ WRONG (fix this immediately):
-```markdown
-Sources: McKinsey Future of Work Report, Buffer State of Remote Work, Gallup Workplace Trends
-```
+## Review Process
 
-## Review Workflow
-
-1. **Run through checklist** — Systematically check all items above
-2. **Flag issues** — Note what fails each check
-3. **Apply fixes** — Make improvements while preserving author voice
-4. **Final polish:**
+1. Run through the checklist systematically
+2. Flag issues that fail each check
+3. Apply fixes while preserving author voice
+4. Final polish:
    - Strengthen weak verbs (is/was → active verbs)
    - Cut filler words (very, really, just, actually)
    - Sharpen the opening line
    - Ensure the last line resonates
 
-## Output Format
+## Draft to Review
 
-Provide the improved blog post with a brief changelog:
+[INSERT: full blog post draft from Writer skill]
 
-```markdown
+## Research Brief (for fact-checking)
+
+[INSERT: full research brief from Researcher skill]
+
+---
+
+Provide the improved blog post followed by revision notes in this format:
+
 # [Revised Title if improved]
 
 [Full revised blog post]
@@ -103,12 +123,50 @@ Provide the improved blog post with a brief changelog:
 - [Optional improvement 2]
 ```
 
+**Important:** Include the FULL draft and FULL research brief in the task file. The Python agent has no access to local files.
+
+### Step 3: Execute Instrumented Reviewer
+
+Run the Python agent via Bash:
+
+```
+Bash: python scripts/arize_agent.py --task-file .claude/logs/tasks/reviewer-1.txt --tools none --skill reviewer --agent-id reviewer-1
+```
+
+The agent returns JSON with `result` (revised blog + revision notes) and `metrics`.
+
+### Step 4: Present Result
+
+1. **Parse the JSON** output from the agent
+2. **Display the revised blog post** from the `result` field
+3. **Show review metrics:**
+
+```markdown
+## Review Metrics
+
+| Metric | Value |
+|--------|-------|
+| Input tokens | X |
+| Output tokens | Y |
+| Cost | $Z |
+| Latency | Ns |
+| Model | claude-sonnet-4-5-20250929 |
+```
+
 ## Success Criteria
 
 - All checklist items pass (or flagged with reason)
 - At least 3 substantive improvements made
 - Author's voice preserved while elevating quality
 - Final output is publication-ready
+
+### Iteration
+
+If the user requests further changes:
+
+1. Compose an updated task prompt including the current revised draft + requested changes
+2. Write to `.claude/logs/tasks/reviewer-2.txt` (increment the number)
+3. Run the agent again — each iteration is tracked separately in Arize
 
 ## Reference
 
