@@ -144,7 +144,7 @@ See [Parallel Invocation Reference](references/parallel-invocation.md) for more 
 
    ```
    For each agent, use the Bash tool with:
-     python scripts/arize_agent.py --task-file .claude/logs/tasks/<agent-id>.txt --tools <tool> --agent-id <id> --skill researcher
+     /c/Python311/python.exe scripts/arize_agent.py --task-file .claude/logs/tasks/<agent-id>.txt --tools <tool> --agent-id <id> --skill researcher
    Launch ALL Bash calls in ONE message for true parallelism.
    ```
 
@@ -152,11 +152,11 @@ See [Parallel Invocation Reference](references/parallel-invocation.md) for more 
 
    **Example — launching 5 agents in parallel:**
    ```
-   Bash: python scripts/arize_agent.py --task-file .claude/logs/tasks/1a.txt --tools web_search --agent-id 1a --skill researcher
-   Bash: python scripts/arize_agent.py --task-file .claude/logs/tasks/1b.txt --tools web_fetch  --agent-id 1b --skill researcher
-   Bash: python scripts/arize_agent.py --task-file .claude/logs/tasks/2a.txt --tools web_search --agent-id 2a --skill researcher
-   Bash: python scripts/arize_agent.py --task-file .claude/logs/tasks/3a.txt --tools web_search --agent-id 3a --skill researcher
-   Bash: python scripts/arize_agent.py --task-file .claude/logs/tasks/3b.txt --tools github_cli --agent-id 3b --skill researcher
+   Bash: /c/Python311/python.exe scripts/arize_agent.py --task-file .claude/logs/tasks/1a.txt --tools web_search --agent-id 1a --skill researcher
+   Bash: /c/Python311/python.exe scripts/arize_agent.py --task-file .claude/logs/tasks/1b.txt --tools web_fetch  --agent-id 1b --skill researcher
+   Bash: /c/Python311/python.exe scripts/arize_agent.py --task-file .claude/logs/tasks/2a.txt --tools web_search --agent-id 2a --skill researcher
+   Bash: /c/Python311/python.exe scripts/arize_agent.py --task-file .claude/logs/tasks/3a.txt --tools web_search --agent-id 3a --skill researcher
+   Bash: /c/Python311/python.exe scripts/arize_agent.py --task-file .claude/logs/tasks/3b.txt --tools github_cli --agent-id 3b --skill researcher
    ```
 
    ⚠️ **CRITICAL:** Do NOT combine multiple tools into one agent. Each tool type = separate agent.

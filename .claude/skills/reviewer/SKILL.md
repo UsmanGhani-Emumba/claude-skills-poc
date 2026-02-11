@@ -130,7 +130,7 @@ Provide the improved blog post followed by revision notes in this format:
 Run the Python agent via Bash:
 
 ```
-Bash: python scripts/arize_agent.py --task-file .claude/logs/tasks/reviewer-1.txt --tools none --skill reviewer --agent-id reviewer-1
+Bash: /c/Python311/python.exe scripts/arize_agent.py --task-file .claude/logs/tasks/reviewer-1.txt --tools none --skill reviewer --agent-id reviewer-1
 ```
 
 The agent returns JSON with `result` (revised blog + revision notes) and `metrics`.

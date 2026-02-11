@@ -147,24 +147,24 @@ Launch all agents in a SINGLE message using multiple Bash calls:
 
 ```
 // Sub-topic 1: Project Setup (web_fetch + web_search)
-Bash: python scripts/arize_agent.py --task-file .claude/logs/tasks/1a.txt --tools web_fetch  --agent-id 1a --skill researcher
-Bash: python scripts/arize_agent.py --task-file .claude/logs/tasks/1b.txt --tools web_search --agent-id 1b --skill researcher
+Bash: /c/Python311/python.exe scripts/arize_agent.py --task-file .claude/logs/tasks/1a.txt --tools web_fetch  --agent-id 1a --skill researcher
+Bash: /c/Python311/python.exe scripts/arize_agent.py --task-file .claude/logs/tasks/1b.txt --tools web_search --agent-id 1b --skill researcher
 
 // Sub-topic 2: Test Syntax (web_fetch + web_search)
-Bash: python scripts/arize_agent.py --task-file .claude/logs/tasks/2a.txt --tools web_fetch  --agent-id 2a --skill researcher
-Bash: python scripts/arize_agent.py --task-file .claude/logs/tasks/2b.txt --tools web_search --agent-id 2b --skill researcher
+Bash: /c/Python311/python.exe scripts/arize_agent.py --task-file .claude/logs/tasks/2a.txt --tools web_fetch  --agent-id 2a --skill researcher
+Bash: /c/Python311/python.exe scripts/arize_agent.py --task-file .claude/logs/tasks/2b.txt --tools web_search --agent-id 2b --skill researcher
 
 // Sub-topic 3: Locators (web_fetch + web_search)
-Bash: python scripts/arize_agent.py --task-file .claude/logs/tasks/3a.txt --tools web_fetch  --agent-id 3a --skill researcher
-Bash: python scripts/arize_agent.py --task-file .claude/logs/tasks/3b.txt --tools web_search --agent-id 3b --skill researcher
+Bash: /c/Python311/python.exe scripts/arize_agent.py --task-file .claude/logs/tasks/3a.txt --tools web_fetch  --agent-id 3a --skill researcher
+Bash: /c/Python311/python.exe scripts/arize_agent.py --task-file .claude/logs/tasks/3b.txt --tools web_search --agent-id 3b --skill researcher
 
 // Sub-topic 4: Community (web_search + github_cli)
-Bash: python scripts/arize_agent.py --task-file .claude/logs/tasks/4a.txt --tools web_search --agent-id 4a --skill researcher
-Bash: python scripts/arize_agent.py --task-file .claude/logs/tasks/4b.txt --tools github_cli --agent-id 4b --skill researcher
+Bash: /c/Python311/python.exe scripts/arize_agent.py --task-file .claude/logs/tasks/4a.txt --tools web_search --agent-id 4a --skill researcher
+Bash: /c/Python311/python.exe scripts/arize_agent.py --task-file .claude/logs/tasks/4b.txt --tools github_cli --agent-id 4b --skill researcher
 
 // Sub-topic 5: CI/CD (web_fetch + web_search)
-Bash: python scripts/arize_agent.py --task-file .claude/logs/tasks/5a.txt --tools web_fetch  --agent-id 5a --skill researcher
-Bash: python scripts/arize_agent.py --task-file .claude/logs/tasks/5b.txt --tools web_search --agent-id 5b --skill researcher
+Bash: /c/Python311/python.exe scripts/arize_agent.py --task-file .claude/logs/tasks/5a.txt --tools web_fetch  --agent-id 5a --skill researcher
+Bash: /c/Python311/python.exe scripts/arize_agent.py --task-file .claude/logs/tasks/5b.txt --tools web_search --agent-id 5b --skill researcher
 ```
 
 ## JSON Output Structure
@@ -275,6 +275,6 @@ After compiling research, aggregate all agent metrics into a summary table:
 
 You can also view historical metrics:
 ```bash
-python scripts/metrics_summary.py --detail
-python scripts/metrics_summary.py --skill researcher --last 20
+/c/Python311/python.exe scripts/metrics_summary.py --detail
+/c/Python311/python.exe scripts/metrics_summary.py --skill researcher --last 20
 ```

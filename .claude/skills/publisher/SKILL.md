@@ -137,7 +137,7 @@ Each block must be a valid Notion API block object. Return ONLY the JSON, no exp
 **Run the instrumented agent:**
 
 ```
-Bash: python scripts/arize_agent.py --task-file .claude/logs/tasks/publisher-1.txt --tools none --skill publisher --agent-id publisher-1 --max-tokens 8192
+Bash: /c/Python311/python.exe scripts/arize_agent.py --task-file .claude/logs/tasks/publisher-1.txt --tools none --skill publisher --agent-id publisher-1 --max-tokens 8192
 ```
 
 The agent returns JSON with `result` (the Notion block batches) and `metrics`.

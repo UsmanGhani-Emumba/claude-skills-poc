@@ -11,7 +11,14 @@
       "WebFetch(domain:api.github.com)",
       "Bash(python -c:*)",
       "Bash(python scripts/arize_agent.py:*)",
-      "Bash(python scripts/metrics_summary.py:*)"
+      "Bash(python scripts/metrics_summary.py:*)",
+      "Bash(C:\\Python311\\python.exe scripts/arize_agent.py:*)",
+      "Bash(C:\\Python311\\python.exe scripts/metrics_summary.py:*)",
+      "Bash(/c/Python311/python.exe scripts/arize_agent.py:*)",
+      "Bash(/c/Python311/python.exe scripts/metrics_summary.py:*)",
+      "Bash(/c/Python314/python:*)",
+      "Bash(/c/Python311/python.exe -m pip:*)",
+      "Bash(/c/Python311/python.exe:*)"
     ]
   },
   "enableAllProjectMcpServers": true,

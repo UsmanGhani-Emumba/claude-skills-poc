@@ -117,7 +117,7 @@ Write the complete blog post now. Follow the style guide, structure template, an
 Run the Python agent via Bash:
 
 ```
-Bash: python scripts/arize_agent.py --task-file .claude/logs/tasks/writer-1.txt --tools none --skill writer --agent-id writer-1
+Bash: /c/Python311/python.exe scripts/arize_agent.py --task-file .claude/logs/tasks/writer-1.txt --tools none --skill writer --agent-id writer-1
 ```
 
 The agent returns JSON with `result` (the blog post) and `metrics` (tokens, cost, latency).
