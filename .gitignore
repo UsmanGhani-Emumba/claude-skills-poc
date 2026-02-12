@@ -22,6 +22,7 @@ node_modules/
 nul
 .claude/skills/writer/output
 .claude/logs/
+.gemini/logs/
 __pycache__/
 *.pyc
 

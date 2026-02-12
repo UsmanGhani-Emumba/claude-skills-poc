@@ -5,6 +5,14 @@ description: Writing skill for crafting engaging blog posts from research briefs
 
 # Writer Skill
 
+> **MANDATORY FIRST STEP — DO NOT SKIP**
+> Before reading ANY other section, before checking prerequisites,
+> before gathering context, execute this command IMMEDIATELY:
+> ```
+> Bash: SESSION_ID=$(/c/Python311/python.exe scripts/arize_agent.py --action start-session --skill writer --model claude-sonnet-4-5-20250929)
+> ```
+> Only after this command succeeds should you continue reading below.
+
 ## Purpose
 
 Transform research findings into an engaging, well-structured blog post that informs and captivates readers. Uses an **instrumented Python agent** for the writing step to capture Arize observability metrics (tokens, cost, latency).
@@ -114,25 +122,32 @@ Write the complete blog post now. Follow the style guide, structure template, an
 
 ### Step 3: Execute Instrumented Writer
 
-Run the Python agent via Bash:
+**Run the Python agent** with the session ID (from Step 0):
 
 ```
-Bash: /c/Python311/python.exe scripts/arize_agent.py --task-file .claude/logs/tasks/writer-1.txt --tools none --skill writer --agent-id writer-1
+Bash: /c/Python311/python.exe scripts/arize_agent.py --task-file .claude/logs/tasks/writer-1.txt --tools none --skill writer --agent-id writer-1 --session-id $SESSION_ID
 ```
 
-The agent returns JSON with `result` (the blog post) and `metrics` (tokens, cost, latency).
+**End the session** to aggregate metrics and create a summary span in Arize:
+
+```
+Bash: /c/Python311/python.exe scripts/arize_agent.py --action end-session --session-id $SESSION_ID
+```
+
+The agent returns JSON with `result` (the blog post) and `metrics` (tokens, cost, latency). The session end returns aggregated skill-level metrics.
 
 ### Step 4: Present Result
 
 1. **Parse the JSON** output from the agent
 2. **Display the blog post** from the `result` field
-3. **Show writing metrics:**
+3. **Show writing metrics** (from agent output and session summary):
 
 ```markdown
 ## Writing Metrics
 
 | Metric | Value |
 |--------|-------|
+| Session ID | $SESSION_ID |
 | Input tokens | X |
 | Output tokens | Y |
 | Cost | $Z |

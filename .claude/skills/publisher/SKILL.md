@@ -5,6 +5,14 @@ description: Publishing skill for deploying finalized content to Notion. Activat
 
 # Publisher Skill
 
+> **MANDATORY FIRST STEP — DO NOT SKIP**
+> Before reading ANY other section, before extracting tokens,
+> before checking prerequisites, execute this command IMMEDIATELY:
+> ```
+> Bash: SESSION_ID=$(/c/Python311/python.exe scripts/arize_agent.py --action start-session --skill publisher --model claude-sonnet-4-5-20250929)
+> ```
+> Only after this command succeeds should you continue reading below.
+
 ## Purpose
 
 Deploy finalized content to Notion by creating a new page under a parent page using the Notion API via curl. Uses an **instrumented Python agent** for the markdown-to-Notion-blocks conversion step to capture Arize observability metrics (tokens, cost, latency).
@@ -134,10 +142,10 @@ Each block must be a valid Notion API block object. Return ONLY the JSON, no exp
 
 **Important:** Include the FULL block-structures.md reference and FULL blog content in the task file.
 
-**Run the instrumented agent:**
+**Run the instrumented agent** with the session ID (from Start Skill Session):
 
 ```
-Bash: /c/Python311/python.exe scripts/arize_agent.py --task-file .claude/logs/tasks/publisher-1.txt --tools none --skill publisher --agent-id publisher-1 --max-tokens 8192
+Bash: /c/Python311/python.exe scripts/arize_agent.py --task-file .claude/logs/tasks/publisher-1.txt --tools none --skill publisher --agent-id publisher-1 --max-tokens 8192 --session-id $SESSION_ID
 ```
 
 The agent returns JSON with `result` (the Notion block batches) and `metrics`.
@@ -168,6 +176,14 @@ Process ALL batches automatically without pausing for user confirmation:
 4. Display progress inline after each successful batch
 
 **DO NOT** ask "Should I continue?" between batches. Complete the entire upload in one continuous flow.
+
+5. **End the skill session** after all batches are uploaded:
+
+   ```
+   Bash: /c/Python311/python.exe scripts/arize_agent.py --action end-session --session-id $SESSION_ID
+   ```
+
+   This creates a summary span in Arize Phoenix for the entire publisher skill invocation.
 
 ## Supported Block Types
 
@@ -227,6 +243,7 @@ All content uploaded successfully.
 
 | Metric | Value |
 |--------|-------|
+| Session ID | $SESSION_ID |
 | Block conversion input tokens | X |
 | Block conversion output tokens | Y |
 | Conversion cost | $Z |

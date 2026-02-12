@@ -4,6 +4,11 @@ Instrumented Anthropic Sub-Agent with Arize Phoenix Tracing.
 Used by ALL Claude skills (.claude) to run instrumented sub-agents
 with full observability metrics for Anthropic models.
 
+Supports skill-level session tracking for multi-agent observability:
+  - start-session: Begin tracking a skill invocation (returns session_id)
+  - run (default): Execute an agent within an optional session
+  - end-session: Aggregate and log session-level metrics
+
 Metrics captured:
   - Input/Output tokens
   - Context used (peak and total input tokens across all API calls)
@@ -11,8 +16,15 @@ Metrics captured:
   - Latency (seconds)
   - Distinct tools used
   - API calls made
+  - Session-level aggregates per skill
 
 Usage:
+  # Session-aware workflow:
+  python scripts/arize_agent.py --action start-session --skill researcher
+  python scripts/arize_agent.py --task-file .claude/logs/tasks/1a.txt --tools web_search --session-id <id> --agent-id 1a --skill researcher
+  python scripts/arize_agent.py --action end-session --session-id <session-id>
+
+  # Standalone (backward compatible):
   python scripts/arize_agent.py --task-file .claude/logs/tasks/1b.txt --tools web_fetch
   python scripts/arize_agent.py --task "Research AI" --model claude-sonnet-4-5-20250929
 """
@@ -23,6 +35,7 @@ import os
 import subprocess
 import sys
 import time
+import uuid
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -68,6 +81,146 @@ def setup_tracing():
     except Exception as e:
         print(f"[WARN] Tracing setup failed: {e}", file=sys.stderr)
         return False
+
+
+def get_tracer():
+    """Get OpenTelemetry tracer for manual span creation. Returns None if unavailable."""
+    try:
+        from opentelemetry import trace
+        return trace.get_tracer("claude-skills-agent")
+    except ImportError:
+        return None
+
+
+# ─── Session Management ─────────────────────────────────────────────────────
+
+SESSIONS_DIR = Path(".claude/logs/sessions")
+SESSIONS_LOG = Path(".claude/logs/arize_skill_sessions.jsonl")
+
+
+def start_skill_session(skill_name, model):
+    """Create a new skill session and return session_id.
+
+    Creates a session metadata file to track the lifecycle of a skill
+    invocation (researcher, writer, reviewer, publisher). All agents
+    spawned within this session pass --session-id to link their metrics.
+    """
+    session_id = f"{skill_name}-{uuid.uuid4().hex[:8]}"
+    SESSIONS_DIR.mkdir(parents=True, exist_ok=True)
+
+    session_info = {
+        "session_id": session_id,
+        "skill": skill_name,
+        "model": model,
+        "start_time": datetime.now(timezone.utc).isoformat(),
+        "status": "active",
+    }
+
+    session_file = SESSIONS_DIR / f"{session_id}.json"
+    session_file.write_text(json.dumps(session_info, indent=2), encoding="utf-8")
+
+    return session_id
+
+
+def end_skill_session(session_id):
+    """Close a skill session: aggregate metrics, create summary span, log results.
+
+    Reads all agent metrics with matching session_id from arize_metrics.jsonl,
+    aggregates them into a session-level summary, creates an Arize summary span,
+    and logs the session to arize_skill_sessions.jsonl.
+    """
+    session_file = SESSIONS_DIR / f"{session_id}.json"
+    if not session_file.exists():
+        return {"error": f"Session not found: {session_id}"}
+
+    session_info = json.loads(session_file.read_text(encoding="utf-8"))
+
+    # Collect all agent metrics for this session
+    metrics_file = Path(".claude/logs/arize_metrics.jsonl")
+    agents = []
+    if metrics_file.exists():
+        for line in metrics_file.read_text(encoding="utf-8").strip().split("\n"):
+            if not line.strip():
+                continue
+            entry = json.loads(line)
+            if entry.get("session_id") == session_id:
+                agents.append(entry)
+
+    # Aggregate metrics
+    total_input = sum(a.get("input_tokens", 0) for a in agents)
+    total_output = sum(a.get("output_tokens", 0) for a in agents)
+    total_cost = sum(a.get("cost_usd", 0) for a in agents)
+    total_api_calls = sum(a.get("api_calls", 0) for a in agents)
+    peak_context = max((a.get("context_tokens_peak", 0) for a in agents), default=0)
+    total_agent_latency = sum(a.get("latency_seconds", 0) for a in agents)
+    all_tools = set()
+    for a in agents:
+        all_tools.update(a.get("tools_used", []))
+
+    # Calculate wall-clock latency (start-session to end-session)
+    start_time = datetime.fromisoformat(session_info["start_time"])
+    end_time = datetime.now(timezone.utc)
+    wall_latency = round((end_time - start_time).total_seconds(), 2)
+
+    context_limit = get_context_limit(session_info.get("model", ""))
+
+    # Create summary span in Arize Phoenix
+    tracer = get_tracer()
+    if tracer:
+        try:
+            with tracer.start_as_current_span(
+                name=f"skill-session:{session_info['skill']}",
+                attributes={
+                    "session.id": session_id,
+                    "skill.name": session_info["skill"],
+                    "model": session_info.get("model", ""),
+                    "session.status": "completed",
+                    "session.agents_count": len(agents),
+                    "session.total_input_tokens": total_input,
+                    "session.total_output_tokens": total_output,
+                    "session.total_cost_usd": round(total_cost, 6),
+                    "session.total_api_calls": total_api_calls,
+                    "session.peak_context_tokens": peak_context,
+                    "session.context_limit": context_limit,
+                    "session.context_utilization": round((peak_context / context_limit) * 100, 2) if context_limit else 0,
+                    "session.wall_latency_seconds": wall_latency,
+                    "session.agent_latency_seconds": round(total_agent_latency, 2),
+                    "session.tools_used": str(sorted(all_tools)),
+                    "session.agent_ids": str([a.get("agent_id") for a in agents]),
+                },
+            ):
+                pass  # Span auto-closes with all attributes
+        except Exception as e:
+            print(f"[WARN] Failed to create session summary span: {e}", file=sys.stderr)
+
+    # Build session summary
+    session_summary = {
+        **session_info,
+        "status": "completed",
+        "end_time": end_time.isoformat(),
+        "wall_latency_seconds": wall_latency,
+        "agent_latency_seconds": round(total_agent_latency, 2),
+        "agents_count": len(agents),
+        "total_input_tokens": total_input,
+        "total_output_tokens": total_output,
+        "total_cost_usd": round(total_cost, 6),
+        "total_api_calls": total_api_calls,
+        "peak_context_tokens": peak_context,
+        "context_limit": context_limit,
+        "context_utilization": round((peak_context / context_limit) * 100, 2) if context_limit else 0,
+        "tools_used": sorted(all_tools),
+        "agent_ids": [a.get("agent_id") for a in agents],
+    }
+
+    # Update session file
+    session_file.write_text(json.dumps(session_summary, indent=2), encoding="utf-8")
+
+    # Append to session-level log
+    SESSIONS_LOG.parent.mkdir(parents=True, exist_ok=True)
+    with open(SESSIONS_LOG, "a", encoding="utf-8") as f:
+        f.write(json.dumps(session_summary) + "\n")
+
+    return session_summary
 
 
 # ─── Tool Definitions ────────────────────────────────────────────────────────
@@ -188,7 +341,8 @@ def calculate_cost(model, input_tokens, output_tokens):
 
 # ─── Agent Loop ──────────────────────────────────────────────────────────────
 
-def run_anthropic(task, tools, model, skill_name, agent_id, max_tokens):
+def _run_agent_loop(task, tools, model, max_tokens):
+    """Core agentic loop — called within an OTel span context if available."""
     client = anthropic.Anthropic()
     api_tools = []
     for t in tools:
@@ -233,6 +387,40 @@ def run_anthropic(task, tools, model, skill_name, agent_id, max_tokens):
     return text, metrics
 
 
+def run_anthropic(task, tools, model, skill_name, agent_id, max_tokens, session_id=None):
+    """Run the agent loop, optionally wrapped in an OTel span for Arize tracing.
+
+    When a tracer is available, creates a parent span that groups all
+    auto-instrumented Anthropic API calls as children. Span attributes
+    include session_id, skill, agent_id, and post-run metrics.
+    """
+    tracer = get_tracer()
+
+    if tracer:
+        span_attrs = {
+            "agent.id": agent_id,
+            "skill.name": skill_name,
+            "model": model,
+        }
+        if session_id:
+            span_attrs["session.id"] = session_id
+
+        with tracer.start_as_current_span(
+            name=f"skill:{skill_name}/agent:{agent_id}",
+            attributes=span_attrs,
+        ) as span:
+            text, metrics = _run_agent_loop(task, tools, model, max_tokens)
+            # Enrich the span with post-run metrics
+            span.set_attribute("tokens.input", metrics["input_tokens"])
+            span.set_attribute("tokens.output", metrics["output_tokens"])
+            span.set_attribute("api_calls", metrics["api_calls"])
+            span.set_attribute("context.peak", metrics["context_tokens_peak"])
+            span.set_attribute("tools_used", str(sorted(metrics["tools_used"])))
+            return text, metrics
+    else:
+        return _run_agent_loop(task, tools, model, max_tokens)
+
+
 # ─── Local Metrics Logging ───────────────────────────────────────────────────
 
 def log_metrics_locally(metrics):
@@ -249,6 +437,8 @@ def log_metrics_locally(metrics):
 
 def main():
     parser = argparse.ArgumentParser(description="Instrumented Anthropic Sub-Agent")
+    parser.add_argument("--action", default="run", choices=["run", "start-session", "end-session"],
+                        help="Action: run (default), start-session, or end-session")
     parser.add_argument("--task", help="Task prompt")
     parser.add_argument("--task-file", help="Path to task prompt file")
     parser.add_argument("--tools", default="web_search,web_fetch", help="Comma-separated tools")
@@ -256,7 +446,28 @@ def main():
     parser.add_argument("--max-tokens", type=int, default=4096, help="Max tokens")
     parser.add_argument("--skill", default="researcher", help="Skill name")
     parser.add_argument("--agent-id", default="unknown", help="Agent identifier")
+    parser.add_argument("--session-id", default=None, help="Session ID to link agent to a skill session")
     args = parser.parse_args()
+
+    # ── Handle session actions ──────────────────────────────────────────────
+
+    if args.action == "start-session":
+        setup_tracing()
+        session_id = start_skill_session(args.skill, args.model)
+        # Print just the session_id for easy capture in bash
+        print(session_id)
+        return
+
+    if args.action == "end-session":
+        if not args.session_id:
+            print("Error: --session-id required for end-session", file=sys.stderr)
+            sys.exit(1)
+        setup_tracing()
+        summary = end_skill_session(args.session_id)
+        print(json.dumps(summary, indent=2))
+        return
+
+    # ── Handle run action (default, backward compatible) ────────────────────
 
     # Resolve task
     task = args.task
@@ -274,7 +485,10 @@ def main():
     start_time = time.time()
 
     try:
-        result, p_metrics = run_anthropic(task, tools, args.model, args.skill, args.agent_id, args.max_tokens)
+        result, p_metrics = run_anthropic(
+            task, tools, args.model, args.skill, args.agent_id, args.max_tokens,
+            session_id=args.session_id,
+        )
 
         # Finalize metrics
         context_limit = get_context_limit(args.model)
@@ -294,8 +508,17 @@ def main():
         metrics["context_limit"] = context_limit
         metrics["context_utilization"] = round((metrics["context_tokens_peak"] / context_limit) * 100, 2)
 
+        # Include session_id in metrics if provided
+        if args.session_id:
+            metrics["session_id"] = args.session_id
+
     except Exception as e:
-        metrics = {"agent_id": args.agent_id, "skill": args.skill, "provider": "anthropic", "error": str(e), "timestamp": datetime.now(timezone.utc).isoformat()}
+        metrics = {
+            "agent_id": args.agent_id, "skill": args.skill, "provider": "anthropic",
+            "error": str(e), "timestamp": datetime.now(timezone.utc).isoformat(),
+        }
+        if args.session_id:
+            metrics["session_id"] = args.session_id
         result = f"Agent error: {e}"
 
     log_metrics_locally(metrics)

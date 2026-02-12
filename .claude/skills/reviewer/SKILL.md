@@ -5,6 +5,14 @@ description: Editorial review skill for polishing and improving blog drafts. Act
 
 # Reviewer Skill
 
+> **MANDATORY FIRST STEP — DO NOT SKIP**
+> Before reading ANY other section, before checking prerequisites,
+> before gathering context, execute this command IMMEDIATELY:
+> ```
+> Bash: SESSION_ID=$(/c/Python311/python.exe scripts/arize_agent.py --action start-session --skill reviewer --model claude-sonnet-4-5-20250929)
+> ```
+> Only after this command succeeds should you continue reading below.
+
 ## Purpose
 
 Elevate draft content to publication-ready quality through systematic review and targeted improvements. Uses an **instrumented Python agent** for the review step to capture Arize observability metrics (tokens, cost, latency).
@@ -127,25 +135,32 @@ Provide the improved blog post followed by revision notes in this format:
 
 ### Step 3: Execute Instrumented Reviewer
 
-Run the Python agent via Bash:
+**Run the Python agent** with the session ID (from Step 0):
 
 ```
-Bash: /c/Python311/python.exe scripts/arize_agent.py --task-file .claude/logs/tasks/reviewer-1.txt --tools none --skill reviewer --agent-id reviewer-1
+Bash: /c/Python311/python.exe scripts/arize_agent.py --task-file .claude/logs/tasks/reviewer-1.txt --tools none --skill reviewer --agent-id reviewer-1 --session-id $SESSION_ID
 ```
 
-The agent returns JSON with `result` (revised blog + revision notes) and `metrics`.
+**End the session** to aggregate metrics and create a summary span in Arize:
+
+```
+Bash: /c/Python311/python.exe scripts/arize_agent.py --action end-session --session-id $SESSION_ID
+```
+
+The agent returns JSON with `result` (revised blog + revision notes) and `metrics`. The session end returns aggregated skill-level metrics.
 
 ### Step 4: Present Result
 
 1. **Parse the JSON** output from the agent
 2. **Display the revised blog post** from the `result` field
-3. **Show review metrics:**
+3. **Show review metrics** (from agent output and session summary):
 
 ```markdown
 ## Review Metrics
 
 | Metric | Value |
 |--------|-------|
+| Session ID | $SESSION_ID |
 | Input tokens | X |
 | Output tokens | Y |
 | Cost | $Z |

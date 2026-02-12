@@ -26,8 +26,8 @@ import time
 from datetime import datetime, timezone
 from pathlib import Path
 
-import google.generativeai as genai
-from google.generativeai.types import FunctionDeclaration, Tool
+from google import genai
+from google.genai import types
 import httpx
 from bs4 import BeautifulSoup
 from dotenv import load_dotenv
@@ -60,8 +60,8 @@ def setup_tracing():
             headers=headers if headers else None,
         )
 
-        from openinference.instrumentation.google_generativeai import GoogleGenerativeAIInstrumentor
-        GoogleGenerativeAIInstrumentor().instrument(tracer_provider=tracer_provider)
+        from openinference.instrumentation.google_genai import GoogleGenAIInstrumentor
+        GoogleGenAIInstrumentor().instrument(tracer_provider=tracer_provider)
 
         return True
     except ImportError:
@@ -180,7 +180,7 @@ def run_gemini(task, tool_names, model_name, skill_name, agent_id, max_tokens=40
     if not api_key:
         raise ValueError("GOOGLE_API_KEY environment variable not set")
 
-    genai.configure(api_key=api_key)
+    client = genai.Client(api_key=api_key)
 
     # Select tools
     tools = []
@@ -188,12 +188,11 @@ def run_gemini(task, tool_names, model_name, skill_name, agent_id, max_tokens=40
         if name in TOOL_FUNCTIONS:
             tools.append(TOOL_FUNCTIONS[name])
 
-    model = genai.GenerativeModel(
-        model_name=model_name,
-        tools=tools if tools else None
+    config = types.GenerateContentConfig(
+        tools=tools if tools else None,
+        automatic_function_calling=types.AutomaticFunctionCallingConfig(disable=False) if tools else None,
+        max_output_tokens=max_tokens,
     )
-
-    chat = model.start_chat(enable_automatic_function_calling=True)
 
     metrics = {
         "input_tokens": 0,
@@ -203,21 +202,25 @@ def run_gemini(task, tool_names, model_name, skill_name, agent_id, max_tokens=40
         "context_tokens_peak": 0,
     }
 
-    response = chat.send_message(task)
+    response = client.models.generate_content(
+        model=model_name,
+        contents=task,
+        config=config,
+    )
     metrics["api_calls"] += 1
 
-    if hasattr(response, "usage_metadata"):
-        metrics["input_tokens"] = response.usage_metadata.prompt_token_count
-        metrics["output_tokens"] = response.usage_metadata.candidates_token_count
-        # For Gemini with auto function calling, peak = total (single send_message call)
-        metrics["context_tokens_peak"] = response.usage_metadata.prompt_token_count
+    if response.usage_metadata:
+        metrics["input_tokens"] = response.usage_metadata.prompt_token_count or 0
+        metrics["output_tokens"] = response.usage_metadata.candidates_token_count or 0
+        metrics["context_tokens_peak"] = response.usage_metadata.prompt_token_count or 0
 
-    # Inspect history to find tool calls
-    for message in chat.history:
-        if message.role == "model":
-            for part in message.parts:
-                if part.function_call:
-                    metrics["tools_used"].add(part.function_call.name)
+    # Check for tool calls in candidates
+    if response.candidates:
+        for candidate in response.candidates:
+            if candidate.content and candidate.content.parts:
+                for part in candidate.content.parts:
+                    if part.function_call:
+                        metrics["tools_used"].add(part.function_call.name)
 
     return response.text, metrics
 

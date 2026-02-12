@@ -5,6 +5,14 @@ description: Research skill for gathering facts, data, and sources on a given to
 
 # Researcher Skill
 
+> **MANDATORY FIRST STEP — DO NOT SKIP**
+> Before reading ANY other section, before analyzing the topic,
+> before planning anything, execute this command IMMEDIATELY:
+> ```
+> Bash: SESSION_ID=$(/c/Python311/python.exe scripts/arize_agent.py --action start-session --skill researcher --model claude-sonnet-4-5-20250929)
+> ```
+> Only after this command succeeds should you continue reading below.
+
 ## Purpose
 
 Gather comprehensive, accurate information on a topic to serve as the foundation for content creation. Uses **parallel instrumented sub-agents** to research multiple sub-topics simultaneously for faster, more thorough research — with full Arize observability.
@@ -140,23 +148,23 @@ See [Parallel Invocation Reference](references/parallel-invocation.md) for more 
    - [Source Title](URL) or command/method used
    ```
 
-7. **Spawn ALL agents in a SINGLE message** - Use the Bash tool to launch all instrumented Python agents simultaneously:
+7. **Spawn ALL agents in a SINGLE message** - Use the Bash tool to launch all instrumented Python agents simultaneously, passing `--session-id`:
 
    ```
    For each agent, use the Bash tool with:
-     /c/Python311/python.exe scripts/arize_agent.py --task-file .claude/logs/tasks/<agent-id>.txt --tools <tool> --agent-id <id> --skill researcher
+     /c/Python311/python.exe scripts/arize_agent.py --task-file .claude/logs/tasks/<agent-id>.txt --tools <tool> --agent-id <id> --skill researcher --session-id $SESSION_ID
    Launch ALL Bash calls in ONE message for true parallelism.
    ```
 
    **Available tools:** `web_search`, `web_fetch`, `github_cli`
 
-   **Example — launching 5 agents in parallel:**
+   **Example — launching 5 agents in parallel (all linked to session):**
    ```
-   Bash: /c/Python311/python.exe scripts/arize_agent.py --task-file .claude/logs/tasks/1a.txt --tools web_search --agent-id 1a --skill researcher
-   Bash: /c/Python311/python.exe scripts/arize_agent.py --task-file .claude/logs/tasks/1b.txt --tools web_fetch  --agent-id 1b --skill researcher
-   Bash: /c/Python311/python.exe scripts/arize_agent.py --task-file .claude/logs/tasks/2a.txt --tools web_search --agent-id 2a --skill researcher
-   Bash: /c/Python311/python.exe scripts/arize_agent.py --task-file .claude/logs/tasks/3a.txt --tools web_search --agent-id 3a --skill researcher
-   Bash: /c/Python311/python.exe scripts/arize_agent.py --task-file .claude/logs/tasks/3b.txt --tools github_cli --agent-id 3b --skill researcher
+   Bash: /c/Python311/python.exe scripts/arize_agent.py --task-file .claude/logs/tasks/1a.txt --tools web_search --agent-id 1a --skill researcher --session-id $SESSION_ID
+   Bash: /c/Python311/python.exe scripts/arize_agent.py --task-file .claude/logs/tasks/1b.txt --tools web_fetch  --agent-id 1b --skill researcher --session-id $SESSION_ID
+   Bash: /c/Python311/python.exe scripts/arize_agent.py --task-file .claude/logs/tasks/2a.txt --tools web_search --agent-id 2a --skill researcher --session-id $SESSION_ID
+   Bash: /c/Python311/python.exe scripts/arize_agent.py --task-file .claude/logs/tasks/3a.txt --tools web_search --agent-id 3a --skill researcher --session-id $SESSION_ID
+   Bash: /c/Python311/python.exe scripts/arize_agent.py --task-file .claude/logs/tasks/3b.txt --tools github_cli --agent-id 3b --skill researcher --session-id $SESSION_ID
    ```
 
    ⚠️ **CRITICAL:** Do NOT combine multiple tools into one agent. Each tool type = separate agent.
@@ -167,9 +175,9 @@ See [Tool-Based Research Reference](references/tool-based-research.md) for tool-
 
 ### Phase 3: Compilation & Metrics
 
-8. **Parse agent outputs** - Each Bash call returns JSON. Extract the `result` field from each.
-9. **Compile research brief** - Merge all findings, remove duplicates, organize coherently
-10. **Resolve data conflicts** - Different sources may contradict each other:
+9. **Parse agent outputs** - Each Bash call returns JSON. Extract the `result` field from each.
+10. **Compile research brief** - Merge all findings, remove duplicates, organize coherently
+11. **Resolve data conflicts** - Different sources may contradict each other:
 
    | Source Type | Data Nature | Trust Level |
    |-------------|-------------|-------------|
@@ -179,8 +187,16 @@ See [Tool-Based Research Reference](references/tool-based-research.md) for tool-
 
    > **Conflict Resolution:** If CLI data contradicts web search data, trust CLI tools for exact numbers (they reflect current state). Note discrepancies in the brief.
 
-11. **Add cross-cutting insights** - Identify connections between sub-topics
-12. **Aggregate metrics** - Collect the `metrics` field from each agent output and produce a summary:
+12. **Add cross-cutting insights** - Identify connections between sub-topics
+13. **End the skill session** — After all agents complete and results are compiled, close the session to aggregate metrics:
+
+   ```
+   Bash: /c/Python311/python.exe scripts/arize_agent.py --action end-session --session-id $SESSION_ID
+   ```
+
+   This outputs a JSON summary with aggregated session metrics (total tokens, cost, wall latency, tools, etc.) and creates a summary span in Arize Phoenix for the entire researcher skill invocation.
+
+14. **Aggregate metrics** - Collect the `metrics` field from each agent output and the session summary to produce a combined view:
 
    ```markdown
    ## Research Metrics
