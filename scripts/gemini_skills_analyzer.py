@@ -476,7 +476,7 @@ def main():
     parser.add_argument("--task", help="Task prompt")
     parser.add_argument("--task-file", help="Path to task prompt file")
     parser.add_argument("--tools", default="", help="Comma-separated tools")
-    parser.add_argument("--model", default="gemini-2.0-flash", help="Model ID")
+    parser.add_argument("--model", default="gemini-3-flash-preview", help="Model ID")
     parser.add_argument("--max-tokens", type=int, default=4096)
     parser.add_argument("--skill", default="researcher")
     parser.add_argument("--agent-id", default="unknown")
