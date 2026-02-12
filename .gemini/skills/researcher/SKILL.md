@@ -1,233 +1,45 @@
 ---
 name: researcher
-description: Research skill for gathering facts, data, and sources on a given topic. Activates when the task requires finding current information, statistics, expert opinions, or real-world examples before writing. Triggers on requests like "research [topic]", "find information about", "gather facts on", or as the first step in content creation pipelines.
+description: Research skill for gathering facts, data, and sources on a given topic. Activates when the task requires finding current information, statistics, expert opinions, or real-world examples.
 ---
 
 # Researcher Skill
 
 ## Purpose
-
-Gather comprehensive, accurate information on a topic to serve as the foundation for content creation. Uses **parallel sub-agents** to research multiple sub-topics simultaneously for faster, more thorough research.
-
----
-
-## Core Principle: Quality Over Agent Count
-
-**NEVER compromise research quality to reduce the number of agents.**
-
-Parallel sub-agents exist to **maximize quality while saving time** - not to minimize agent usage. Always spawn all necessary agents for comprehensive coverage.
-
-**Rules:**
-1. Always evaluate which tools each sub-topic requires (WebSearch, WebFetch, Bash, etc.)
-2. **ONE AGENT PER TOOL TYPE** - If a sub-topic needs multiple tools, spawn separate agents for each tool
-3. More agents = better coverage (parallel execution means no time penalty)
-
-### Research Limits (Prevent Long Loops)
-
-To ensure focused, quality research without getting stuck:
-
-| Constraint | Limit |
-|------------|-------|
-| Distinct tools per sub-topic | Max 5 |
-| Results/calls per tool | Max 5 |
-
-**Example:** For a sub-topic using WebSearch, perform up to 5 searches and use the top results. Don't endlessly search for more - quality over quantity.
-
-### Agent-per-Distinct-Tool Example
-
-**Sub-topic:** "GitHub Repository Statistics"
-
-**Distinct tools needed:** WebSearch + Bash (2 distinct tool types)
-
-**WRONG (1 agent using both tools sequentially):**
-```
-❌ Agent 1: WebSearch + Bash (gh CLI)
-```
-
-**CORRECT (2 agents in parallel, one per distinct tool):**
-```
-✅ Agent 1a: WebSearch only → "Find articles about repo community growth" (can make multiple searches)
-✅ Agent 1b: Bash only → "Get live stars, forks, issues counts" (can run multiple commands)
-```
-
-**Note:** If Agent 1a needs 3 different WebSearch queries, that's still 1 agent making 3 calls - NOT 3 agents.
-
-Both agents run simultaneously, results are merged in Phase 3.
-
-See [Parallel Invocation Reference](references/parallel-invocation.md) for more examples.
-
----
+Gather comprehensive, accurate information on a topic using available tools to provide a high-quality research brief.
 
 ## Workflow
+1. **Analyze Topic**: Break down the main topic into **5-6 independent sub-topics**.
+2. **Assign Agents (Parallel Strategy)**:
+   - **One Agent per Tool Type**: If a sub-topic needs `web_search` and `github_cli`, spawn separate parallel agents for each.
+   - **Maximize Quality**: Spawn as many agents as necessary to cover all sub-topics and tools simultaneously.
+3. **Execute Research**: Use the `browser_subagent` tool to spawn all necessary sub-agents in a single parallel batch (`waitForPreviousTools: false`).
+4. **Compile Brief**: Synthesize all findings into a unified, structured research brief.
 
-### Phase 1: Topic Analysis
+## Available Tools
+- `web_search`: Core discovery tool (built-in).
+- `web_fetch`: Programmatic content extraction ([web_fetch.py](references/web_fetch.py)).
+- `bash`: Generic terminal command execution (built-in).
+- `github_cli`: Repository and community data wrapper ([github_cli.py](references/github_cli.py)).
 
-1. **Clarify scope** - Identify the core topic and any specific angles requested
-2. **Break down into sub-topics** - Identify 3-6 distinct sub-topics that together provide comprehensive coverage:
-   - Core concept/definition
-   - Historical context or background
-   - Current state/trends
-   - Key players/stakeholders
-   - Challenges/problems
-   - Future outlook/predictions
-   - Practical applications
+## Research Strategy
+Refer to the **[Search Strategy](references/search_strategy.md)** for best practices on combining these tools for high-quality findings.
 
-3. **Check for Dependencies (Critical)**
-   - Ask: "Does any sub-topic require output *from* another sub-topic?"
-   - **If YES:** Run these sequentially (e.g., "Find GitHub URL" then "Clone Repo").
-   - **If NO:** Run these in parallel.
+## Quality Standards
+- **Depth**: Find specific facts and statistics, not just general summaries.
+- **Multitool Usage**: If a sub-topic needs GitHub data AND documentation, use both `github_cli` and `web_fetch`.
+- **Sources**: Every key fact must be attributed to a source URL.
 
-   **Example of dependent tasks (Sequential):**
-   ```
-   ❌ "Find GitHub URL" (Agent A) + "Clone it" (Agent B) → MUST be Sequential
-   ```
-
-   **Example of independent tasks (Parallel):**
-   ```
-   ✅ "Search articles" (Agent A) + "Get GitHub stats" (Agent B) → Safe to Parallelize
-   ```
-
-### Phase 2: Parallel Sub-Agent Research
-
-4. **Create agent assignment table** - For each sub-topic, list the DISTINCT tools needed (one row per distinct tool type):
-
-   | Sub-topic | Distinct Tool | Agent ID | Research Goal |
-   |-----------|---------------|----------|---------------|
-   | Framework A overview | WebSearch | 1 | Find adoption articles |
-   | Framework B overview | WebSearch | 2 | Find comparison posts |
-   | Official docs | WebFetch | 3 | Extract API patterns from docs.example.com |
-   | GitHub stats | WebSearch | 4 | Find articles about community growth |
-   | GitHub stats | Bash | 5 | Run gh CLI for live star/fork counts |
-
-   **Key rules:**
-   - One agent per **distinct tool type** per sub-topic.
-   - A sub-topic can use **up to 5 different tools** → up to 5 agents for that sub-topic.
-   - **Same Tool, Multiple Calls:** (e.g., `search("query1")`, `search("query2")`) → **1 Agent** (Agent loop handles iteration).
-   - **Different Tools:** (e.g., `search()` + `shell()`) → **2 Agents** (each tool gets its own agent).
-
-5. **Count total agents** - Simply count the rows in your table:
-   ```
-   Total Agents = Number of rows in assignment table
-   ```
-
-6. **Spawn ALL agents in a SINGLE message** - Use the `browser_subagent` tool to launch all sub-agents simultaneously.
-
-⚠️ **Parallelism Rule**: To ensure true concurrent execution, every `browser_subagent` call in this batch must have `waitForPreviousTools: false` (or be sent in the same parallel block).
-
-```
-For each agent, use the browser_subagent tool with:
-- TaskName: "[SUB_TOPIC] Research"
-- RecordingName: "[sub_topic]_research"
-- Task: Highly detailed research prompt
-- waitForPreviousTools: false (CRITICAL for simultaneous execution)
-```
-
-⚠️ **CRITICAL:** Do NOT combine multiple tools into one agent. Each tool type = separate agent.
-
-**Sub-agent prompt template:**
-```
-Research the following sub-topic for a blog post:
-
-Main Topic: [MAIN_TOPIC]
-Sub-topic: [SUB_TOPIC]
-Research Goal: [SPECIFIC_GOAL]
-
-**TOOL RESTRICTION: Use ONLY [TOOL_NAME] for this research.**
-- Make up to 5 calls with [TOOL_NAME]
-- Do NOT use other tools - separate agents handle those
-
-Return your findings in this format:
-
-## [SUB_TOPIC] (via [TOOL_NAME])
-
-### Key Findings
-- Finding 1 (Source: ...)
-
-### Sources
-- [Source Title](URL) or command/method used
-```
-
-**Example goals by research type:**
-- Web research: "Find recent articles about framework adoption trends and developer sentiment"
-- Documentation: "Extract key features and API patterns from the official docs"
-- GitHub data: "Get live repository statistics (stars, forks, issues, contributors) using gh CLI"
-
-See [Tool-Based Research Reference](references/tool-based-research.md) for tool-specific prompt templates.
-
-### Phase 3: Compilation
-
-7. **Compile all sub-agent results** - Gather outputs from all parallel agents
-8. **Automation**: Use `SafeToAutoRun: true` for non-destructive research commands (e.g., `ls`, `grep`, `curl` for public data, or running localized discovery scripts).
-9. **Synthesize into unified brief** - Merge findings, remove duplicates, organize coherently
-10. **Resolve data conflicts** - Different sources may contradict each other:
-
-   | Source Type | Data Nature | Trust Level |
-   |-------------|-------------|-------------|
-   | CLI tools (Bash/gh) | Current/live state | **High** (exact numbers) |
-   | WebSearch | Historical/contextual | Medium (may be outdated) |
-   | WebFetch (docs) | Official/authoritative | High (but check version) |
-
-   > **Conflict Resolution:** If CLI data contradicts Web Search data, trust CLI tools for exact numbers (they reflect current state). Note discrepancies in the brief.
-
-11. **Add cross-cutting insights** - Identify connections between sub-topics
-
----
-
-## Output Format
-
-Produce a structured research brief:
-
-```markdown
-# Research Brief: [Topic]
-
-## Executive Summary
-Brief overview synthesizing all sub-topic research (2-3 sentences)
-
-## Sub-Topics Researched
-1. [Sub-topic 1]
-2. [Sub-topic 2]
-3. [Sub-topic 3]
-
----
-
-## [Sub-topic 1 Name]
-
-### Key Facts
-- Fact 1 (Source: ...)
-- Fact 2 (Source: ...)
-
-### Statistics & Data
-- Stat 1 (Source, Year)
-
-### Recent Developments
-- Development 1 (Date, Source)
-
----
-
-## [Sub-topic 2 Name]
-[Same structure...]
-
----
-
-## Cross-Cutting Insights
-- Connection between sub-topic 1 and 3
-- Emerging pattern across all sub-topics
-
-## Interesting Angles for Writing
-- Angle worth exploring 1
-- Angle worth exploring 2
-
-## Sources
-- [Source Title](URL) - Brief description
-- [Source Title](URL) - Brief description
-```
-
-**Note:** Format sources as a bulleted list with URLs. The Reviewer skill validates source formatting.
+## Output Format: Research Brief
+Return a structured markdown document containing:
+1. **Executive Summary**: 2-3 sentence overview.
+2. **Sub-Topic Sections**: Structured facts and data for each of the 5-6 sub-topics.
+3. **Cross-Cutting Insights**: Connections found between different areas.
+4. **Sources**: A bulleted list of all URLs referenced.
 
 ---
 
 ## References
-
 - [Quality Criteria](references/quality-criteria.md) - Standards for research output
 - [Tool-Based Research](references/tool-based-research.md) - Implementation details and prompt templates
 - [Parallel Invocation](references/parallel-invocation.md) - Examples of spawning parallel agents

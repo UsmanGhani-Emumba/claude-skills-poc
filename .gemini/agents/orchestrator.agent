@@ -1,0 +1,8 @@
+agent:
+  name: "ContentDirector"
+  auth: "GOOGLE_API_KEY" # Explicitly uses your key
+  observability:
+    provider: "arize-phoenix"
+    # Logic to set: project_name = f"{input_topic}_gemini_skills"
+    dynamic_project_naming: true 
+    trace_thinking: true

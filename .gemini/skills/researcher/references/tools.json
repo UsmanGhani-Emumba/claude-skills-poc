@@ -1,0 +1,14 @@
+{
+    "web_fetch": {
+        "description": "Extract full text from specific URLs.",
+        "parameters": {
+            "url": "string"
+        }
+    },
+    "github_cli": {
+        "description": "Run GitHub CLI commands (e.g., 'repo view', 'search repo') to get data.",
+        "parameters": {
+            "command": "string"
+        }
+    }
+}
