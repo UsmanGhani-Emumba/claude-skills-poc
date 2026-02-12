@@ -9,8 +9,11 @@ description: Publishing skill for deploying finalized content to Notion. Activat
 > Before reading ANY other section, before extracting tokens,
 > before checking prerequisites, execute this command IMMEDIATELY:
 > ```
-> Bash: SESSION_ID=$(/c/Python311/python.exe scripts/arize_agent.py --action start-session --skill publisher --model claude-sonnet-4-5-20250929)
+> Bash: SESSION_ID=$(/c/Python311/python.exe scripts/arize_agent.py --action start-session --skill publisher --model claude-sonnet-4-5-20250929 --project-name "<TOPIC_SLUG>_claude_skills")
 > ```
+> **Derive `<TOPIC_SLUG>`** from the blog topic: lowercase, spaces to underscores, max 30 chars, alphanumeric + underscores only.
+> Example: "How to use Cypress with Cucumber" → `cypress_with_cucumber_claude_skills`
+>
 > Only after this command succeeds should you continue reading below.
 
 ## Purpose

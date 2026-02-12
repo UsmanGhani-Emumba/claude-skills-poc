@@ -9,8 +9,11 @@ description: Research skill for gathering facts, data, and sources on a given to
 > Before reading ANY other section, before analyzing the topic,
 > before planning anything, execute this command IMMEDIATELY:
 > ```
-> Bash: SESSION_ID=$(/c/Python311/python.exe scripts/arize_agent.py --action start-session --skill researcher --model claude-sonnet-4-5-20250929)
+> Bash: SESSION_ID=$(/c/Python311/python.exe scripts/arize_agent.py --action start-session --skill researcher --model claude-sonnet-4-5-20250929 --project-name "<TOPIC_SLUG>_claude_skills")
 > ```
+> **Derive `<TOPIC_SLUG>`** from the user's topic: lowercase, spaces to underscores, max 30 chars, alphanumeric + underscores only.
+> Example: "How to use Cypress with Cucumber" → `cypress_with_cucumber_claude_skills`
+>
 > Only after this command succeeds should you continue reading below.
 
 ## Purpose

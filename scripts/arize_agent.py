@@ -50,8 +50,13 @@ load_dotenv()
 # ─── Tracing Setup ───────────────────────────────────────────────────────────
 
 
-def setup_tracing():
-    """Initialize Arize Phoenix tracing for Anthropic if available."""
+def setup_tracing(project_name=None):
+    """Initialize Arize Phoenix tracing for Anthropic if available.
+
+    Args:
+        project_name: Arize project name. If None, falls back to
+                      ARIZE_PROJECT_NAME env var, then "claude-skills".
+    """
     try:
         from phoenix.otel import register
 
@@ -60,14 +65,14 @@ def setup_tracing():
             "PHOENIX_COLLECTOR_ENDPOINT",
             "https://app.phoenix.arize.com/v1/traces",
         )
-        project_name = os.getenv("ARIZE_PROJECT_NAME", "claude-skills")
+        final_project_name = project_name or os.getenv("ARIZE_PROJECT_NAME", "claude-skills")
 
         headers = {}
         if arize_api_key:
             headers["api_key"] = arize_api_key
 
         tracer_provider = register(
-            project_name=project_name,
+            project_name=final_project_name,
             endpoint=endpoint,
             headers=headers if headers else None,
         )
@@ -98,12 +103,14 @@ SESSIONS_DIR = Path(".claude/logs/sessions")
 SESSIONS_LOG = Path(".claude/logs/arize_skill_sessions.jsonl")
 
 
-def start_skill_session(skill_name, model):
+def start_skill_session(skill_name, model, project_name=None):
     """Create a new skill session and return session_id.
 
     Creates a session metadata file to track the lifecycle of a skill
     invocation (researcher, writer, reviewer, publisher). All agents
     spawned within this session pass --session-id to link their metrics.
+    The project_name is stored so subsequent agents and end-session
+    can use the same Arize project.
     """
     session_id = f"{skill_name}-{uuid.uuid4().hex[:8]}"
     SESSIONS_DIR.mkdir(parents=True, exist_ok=True)
@@ -112,6 +119,7 @@ def start_skill_session(skill_name, model):
         "session_id": session_id,
         "skill": skill_name,
         "model": model,
+        "project_name": project_name or os.getenv("ARIZE_PROJECT_NAME", "claude-skills"),
         "start_time": datetime.now(timezone.utc).isoformat(),
         "status": "active",
     }
@@ -168,9 +176,12 @@ def end_skill_session(session_id):
     tracer = get_tracer()
     if tracer:
         try:
+            from opentelemetry.trace import StatusCode
+
             with tracer.start_as_current_span(
                 name=f"skill-session:{session_info['skill']}",
                 attributes={
+                    "openinference.span.kind": "CHAIN",
                     "session.id": session_id,
                     "skill.name": session_info["skill"],
                     "model": session_info.get("model", ""),
@@ -188,8 +199,8 @@ def end_skill_session(session_id):
                     "session.tools_used": str(sorted(all_tools)),
                     "session.agent_ids": str([a.get("agent_id") for a in agents]),
                 },
-            ):
-                pass  # Span auto-closes with all attributes
+            ) as span:
+                span.set_status(StatusCode.OK)
         except Exception as e:
             print(f"[WARN] Failed to create session summary span: {e}", file=sys.stderr)
 
@@ -397,7 +408,10 @@ def run_anthropic(task, tools, model, skill_name, agent_id, max_tokens, session_
     tracer = get_tracer()
 
     if tracer:
+        from opentelemetry.trace import StatusCode
+
         span_attrs = {
+            "openinference.span.kind": "AGENT",
             "agent.id": agent_id,
             "skill.name": skill_name,
             "model": model,
@@ -416,6 +430,7 @@ def run_anthropic(task, tools, model, skill_name, agent_id, max_tokens, session_
             span.set_attribute("api_calls", metrics["api_calls"])
             span.set_attribute("context.peak", metrics["context_tokens_peak"])
             span.set_attribute("tools_used", str(sorted(metrics["tools_used"])))
+            span.set_status(StatusCode.OK)
             return text, metrics
     else:
         return _run_agent_loop(task, tools, model, max_tokens)
@@ -447,13 +462,28 @@ def main():
     parser.add_argument("--skill", default="researcher", help="Skill name")
     parser.add_argument("--agent-id", default="unknown", help="Agent identifier")
     parser.add_argument("--session-id", default=None, help="Session ID to link agent to a skill session")
+    parser.add_argument("--project-name", default=None,
+                        help="Arize project name (e.g., 'my_topic_claude_skills'). Stored in session and reused by all agents.")
     args = parser.parse_args()
+
+    # ── Helper: resolve project name from session file ──────────────────────
+
+    def resolve_project_name_from_session(session_id):
+        """Read project_name from session file if available."""
+        if not session_id:
+            return None
+        session_file = SESSIONS_DIR / f"{session_id}.json"
+        if session_file.exists():
+            info = json.loads(session_file.read_text(encoding="utf-8"))
+            return info.get("project_name")
+        return None
 
     # ── Handle session actions ──────────────────────────────────────────────
 
     if args.action == "start-session":
-        setup_tracing()
-        session_id = start_skill_session(args.skill, args.model)
+        project_name = args.project_name
+        setup_tracing(project_name=project_name)
+        session_id = start_skill_session(args.skill, args.model, project_name=project_name)
         # Print just the session_id for easy capture in bash
         print(session_id)
         return
@@ -462,7 +492,8 @@ def main():
         if not args.session_id:
             print("Error: --session-id required for end-session", file=sys.stderr)
             sys.exit(1)
-        setup_tracing()
+        project_name = args.project_name or resolve_project_name_from_session(args.session_id)
+        setup_tracing(project_name=project_name)
         summary = end_skill_session(args.session_id)
         print(json.dumps(summary, indent=2))
         return
@@ -477,8 +508,9 @@ def main():
         print("Error: No task provided.", file=sys.stderr)
         sys.exit(1)
 
-    # Setup Tracing
-    setup_tracing()
+    # Resolve project name: explicit flag > session file > env var > default
+    project_name = args.project_name or resolve_project_name_from_session(args.session_id)
+    setup_tracing(project_name=project_name)
 
     # Run Agent
     tools = [t.strip() for t in args.tools.split(",") if t.strip()]
