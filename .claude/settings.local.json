@@ -1,0 +1,15 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(python -m py_compile:*)",
+      "Bash(python:*)",
+      "Bash(where:*)",
+      "Bash(py -3.11:*)",
+      "Bash(.venvScriptspip install -r requirements.txt)",
+      "Bash(.venv/Scripts/pip install:*)",
+      "Bash(.venv/Scripts/python -m pytest tests/ -v)",
+      "Bash(find . -name \"__init__.py\" -not -path \"./.venv/*\" -exec sh -c 'if [ ! -s \"\"$1\"\" ]; then echo \"\"EMPTY: $1\"\"; else echo \"\"HAS CONTENT: $1\"\"; fi' _ {} ;)",
+      "Bash(ls:*)"
+    ]
+  }
+}
