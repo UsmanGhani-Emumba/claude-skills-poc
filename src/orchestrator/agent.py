@@ -3,7 +3,7 @@ from rich.console import Console
 from rich.table import Table
 
 from src.config import MODEL_NAME, INPUT_COST_PER_1K, OUTPUT_COST_PER_1K, CONTEXT_WINDOW
-from src.observability.tracer import setup_observability
+from src.observability.tracer import launch_phoenix, setup_observability, _slugify
 from src.observability.metrics import MetricsCollector
 from src.orchestrator.intent import IntentDetector
 from src.orchestrator.pipeline import Pipeline
@@ -17,10 +17,10 @@ console = Console()
 
 class OrchestratorAgent:
     def __init__(self, api_key: str, notion_api_key: str = None, notion_db_id: str = None):
-        # Step 1: Observability FIRST
-        self.tracer_provider = setup_observability()
+        # Step 1: Launch Phoenix UI (tracer registered later with topic name)
+        launch_phoenix()
 
-        # Step 2: Anthropic client (now auto-instrumented)
+        # Step 2: Anthropic client
         self.client = Anthropic(api_key=api_key)
         self.model = MODEL_NAME
 
@@ -63,6 +63,12 @@ class OrchestratorAgent:
             f"(confidence: {intent_result['confidence']:.0%})\n"
             f"[bold]Topic:[/bold] {topic}\n"
         )
+
+        # Register tracer with topic-based project name so spans appear
+        # under a meaningful project in the Phoenix dashboard
+        project_name = _slugify(topic)
+        self.tracer_provider = setup_observability(project_name)
+        console.print(f"[dim]Phoenix project: {project_name}[/dim]\n")
 
         # Route
         if intent == "full_pipeline":

@@ -16,7 +16,7 @@ You are a content publisher. When invoked:
 
 ## Output Format
 
-Return JSON for the publishing script:
+Return ONLY the JSON object below — no explanations, no instructions, no extra text:
 
 ```json
 {
@@ -30,14 +30,6 @@ Return JSON for the publishing script:
         {"type": "bulleted_list_item", "text": "List item..."}
     ]
 }
-```
-
-## Publishing Script
-
-After generating the JSON, run the publishing script:
-
-```bash
-python .claude/skills/publisher/references/notion_publish.py
 ```
 
 ## Guidelines

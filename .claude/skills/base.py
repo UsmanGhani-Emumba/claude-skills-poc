@@ -3,6 +3,7 @@ from abc import ABC, abstractmethod
 from pathlib import Path
 from anthropic import Anthropic
 from opentelemetry import trace
+from opentelemetry.trace import StatusCode
 
 
 class BaseSkill(ABC):
@@ -69,6 +70,7 @@ class BaseSkill(ABC):
             span.set_attribute("skill.output_tokens", skill_metrics.output_tokens)
             span.set_attribute("skill.latency_ms", skill_metrics.latency_ms)
             span.set_attribute("skill.cost_usd", skill_metrics.cost_usd)
+            span.set_status(StatusCode.OK)
 
             return {"content": content, "metrics": skill_metrics}
 

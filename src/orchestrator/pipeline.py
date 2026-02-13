@@ -66,6 +66,11 @@ class Pipeline:
             results["publish"] = published
             self._log(published["metrics"])
 
+            if published.get("published"):
+                console.print(f"[bold green]✓ Published to Notion:[/bold green] {published.get('notion_url', 'N/A')}")
+            else:
+                console.print(f"[bold red]✗ Publish failed:[/bold red] {published.get('publish_error', 'Unknown error')}")
+
         return results
 
     def _log(self, m):
