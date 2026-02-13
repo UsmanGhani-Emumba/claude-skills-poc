@@ -1,6 +1,6 @@
 ---
 name: researcher
-description: Deep research on a topic using parallel sub-agent decomposition. Splits a topic into 4-6 subtopics, spawns sub-agents per subtopic, and further fans out per tool type — each sub-agent makes up to 5 requests to ensure high-quality, comprehensive results. Use when the user asks to research, investigate, or find information about a topic.
+description: Deep research on a topic using parallel sub-agent decomposition. Splits a topic into 4-6 subtopics, assigns 1-3 tools per subtopic, then spawns ALL (subtopic, tool) sub-agents in a single parallel batch — each sub-agent makes up to 5 requests to ensure high-quality, comprehensive results. Use when the user asks to research, investigate, or find information about a topic.
 ---
 
 # Researcher Skill
@@ -13,7 +13,7 @@ into a comprehensive research brief.
 
 ---
 
-## Phase 1 — Subtopic Decomposition
+## Phase 1 — Subtopic Decomposition & Tool Assignment
 
 When given a topic:
 
@@ -22,31 +22,11 @@ When given a topic:
    - Aim for a mix of: foundational/definitional, current state, key players/examples,
      contrarian/critical perspectives, future outlook, and practical implications.
 
-2. Return the subtopic list as a structured plan before proceeding.
+2. **Assign 1-3 tools** to each subtopic from the Research Tool Registry below,
+   based on what sources are most relevant. Justify each selection briefly.
 
-**Example** — Topic: "Impact of AI on Software Engineering"
-```
-Subtopics:
-  1. AI-assisted code generation tools (Copilot, Cursor, etc.)
-  2. Effect on developer productivity and job roles
-  3. AI in testing, debugging, and code review
-  4. Security and reliability risks of AI-generated code
-  5. Enterprise adoption patterns and ROI data
-  6. Future outlook — AGI-level coding and what remains human
-```
-
----
-
-## Phase 2 — Parallel Sub-Agent Spawning (per subtopic)
-
-For **each subtopic**, spawn a dedicated sub-agent. All subtopic sub-agents run 
-**in parallel** to minimize total research time.
-
-### Tool Selection Per Subtopic
-
-Each sub-agent must select **1-3 tools** from the Research Tool Registry below 
-based on what sources are most relevant for that subtopic. The tool selection 
-should be justified briefly.
+3. **Build the spawn plan** — a flat list of `(subtopic, tool)` pairs.
+   This is the complete set of sub-agents that will be spawned in Phase 2.
 
 ### Research Tool Registry
 
@@ -59,22 +39,47 @@ should be justified briefly.
 | `arxiv_papers`      | Academic       | Fetch academic papers and preprints via web fetch from arxiv.org, scholar    | Research papers, formal studies, peer-reviewed data      |
 | `docs_search`       | Documentation  | Fetch official docs, RFCs, specs via `fetch_webpage`                         | Technical specifications, API references, standards      |
 
+**Example** — Topic: "Impact of AI on Software Engineering"
+```
+Subtopics & Tool Assignments:
+  1. AI-assisted code generation tools    → [web_search, github_search]
+  2. Developer productivity and job roles → [web_search, youtube_search]
+  3. AI in testing, debugging, code review→ [github_search, docs_search]
+  4. Security risks of AI-generated code  → [web_search, arxiv_papers]
+  5. Enterprise adoption patterns and ROI → [web_search, terminal_cmd]
+  6. Future outlook — AGI-level coding    → [arxiv_papers, youtube_search]
+
+Spawn plan (12 sub-agents):
+  [1-web, 1-github, 2-web, 2-youtube, 3-github, 3-docs,
+   4-web, 4-arxiv, 5-web, 5-terminal, 6-arxiv, 6-youtube]
+```
+
 ---
 
-## Phase 3 — Per-Tool Sub-Agent Fan-Out
+## Phase 2 — Parallel Sub-Agent Execution (all at once)
 
-For each subtopic sub-agent, **further spawn one sub-agent per selected tool**.
+Spawn **ALL** sub-agents from the spawn plan **simultaneously in one parallel batch**.
+No intermediate layer — every `(subtopic, tool)` pair runs as an independent sub-agent.
 
-- If a subtopic selects 2 tools → 2 sub-agents are spawned for that subtopic.
-- If a subtopic selects 3 tools → 3 sub-agents are spawned.
-- These per-tool sub-agents also run **in parallel**.
+```
+Phase 1 output:  6 subtopics × ~2 tools each = ~12 sub-agents
+Phase 2:         All 12 launch in parallel
+                 ┌─ Agent[subtopic-1, web_search]
+                 ├─ Agent[subtopic-1, github_search]
+                 ├─ Agent[subtopic-2, web_search]
+                 ├─ Agent[subtopic-2, youtube_search]
+                 ├─ ...
+                 └─ Agent[subtopic-6, youtube_search]
+```
 
-### Per-Tool Sub-Agent Behavior
+### Per Sub-Agent Behavior
 
-Each per-tool sub-agent:
+Each sub-agent receives: `(subtopic_description, assigned_tool, original_topic)`
 
 1. **Makes up to 5 requests** using its assigned tool to gather high-quality results.
 2. Returns a structured mini-brief:
+   - **Subtopic**: Which subtopic this covers
+   - **Tool Used**: Which tool was used
    - **Source URLs / References**: Exact links or identifiers for every source consulted.
    - **Key Findings**: 3-5 bullet points of the most important discoveries.
    - **Data Points**: Any statistics, numbers, benchmarks found.
@@ -96,7 +101,7 @@ obtained after 3-4 requests. The goal is quality, not quota.
 
 ---
 
-## Phase 4 — Synthesis & Aggregation
+## Phase 3 — Synthesis & Aggregation
 
 After all sub-agents complete, **merge and deduplicate** findings:
 
