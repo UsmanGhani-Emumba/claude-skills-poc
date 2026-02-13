@@ -6,7 +6,7 @@ load_dotenv()
 ANTHROPIC_API_KEY = os.getenv("ANTHROPIC_API_KEY")
 NOTION_API_KEY = os.getenv("NOTION_API_KEY")
 NOTION_DATABASE_ID = os.getenv("NOTION_DATABASE_ID")
-MODEL_NAME = os.getenv("MODEL_NAME", "claude-sonnet-4-5-20241022")
+MODEL_NAME = os.getenv("MODEL_NAME", "claude-sonnet-4-5-20250929")
 MAX_TOKENS = 16384
 CONTEXT_WINDOW = 200_000
 
