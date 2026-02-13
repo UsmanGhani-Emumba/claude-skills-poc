@@ -67,12 +67,6 @@ Orchestrator Agent (type 'quit' to exit)
 You: Write an article about quantum computing
 ```
 
-### Single-shot mode
-
-```bash
-python -m src.main "Research the latest trends in AI agents"
-```
-
 ### Using slash commands (in Claude Code)
 
 ```

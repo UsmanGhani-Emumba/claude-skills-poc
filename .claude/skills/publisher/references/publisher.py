@@ -36,19 +36,30 @@ def _to_notion_block(block: dict) -> dict:
     """Convert a simple block dict to Notion API block format."""
     btype = block.get("type", "paragraph")
     text = block.get("text", "")
-    return {
-        "object": "block",
-        "type": btype,
-        btype: {"rich_text": [{"type": "text", "text": {"content": text}}]},
-    }
+
+    # Divider has no rich_text
+    if btype == "divider":
+        return {"object": "block", "type": "divider", "divider": {}}
+
+    # Notion rich_text has a 2000-char limit per text object — chunk if needed
+    chunks = [text[i:i + 2000] for i in range(0, max(len(text), 1), 2000)]
+    rich_text = [{"type": "text", "text": {"content": c}} for c in chunks]
+
+    notion_block = {"object": "block", "type": btype, btype: {"rich_text": rich_text}}
+
+    # Callout requires an icon
+    if btype == "callout":
+        notion_block["callout"]["icon"] = {"type": "emoji", "emoji": "💡"}
+
+    return notion_block
 
 
 def _publish_to_notion_rest(data: dict) -> dict:
     """Publish to Notion via REST API using env vars for auth."""
     api_key = os.getenv("NOTION_API_KEY")
-    db_id = os.getenv("NOTION_DATABASE_ID")
+    parent_id = os.getenv("NOTION_DATABASE_ID")
 
-    if not api_key or not db_id:
+    if not api_key or not parent_id:
         raise ValueError("NOTION_API_KEY and NOTION_DATABASE_ID must be set in .env")
 
     headers = {
@@ -57,14 +68,19 @@ def _publish_to_notion_rest(data: dict) -> dict:
         "Notion-Version": "2022-06-28",
     }
 
+    children = [_to_notion_block(block) for block in data.get("content_blocks", [])]
+
+    # Notion limits children to 100 blocks per request — batch if needed
+    first_batch = children[:100]
+    remaining = children[100:]
+
+    # Try as page parent first (most common), fall back to database parent
     page_payload = {
-        "parent": {"database_id": db_id},
+        "parent": {"page_id": parent_id},
         "properties": {
-            "Name": {"title": [{"text": {"content": data["title"]}}]},
+            "title": [{"text": {"content": data["title"]}}],
         },
-        "children": [
-            _to_notion_block(block) for block in data.get("content_blocks", [])
-        ],
+        "children": first_batch,
     }
 
     resp = requests.post(
@@ -72,8 +88,38 @@ def _publish_to_notion_rest(data: dict) -> dict:
         headers=headers,
         json=page_payload,
     )
+
+    # If page_id fails, retry as database_id
+    if resp.status_code == 400 or resp.status_code == 404:
+        db_payload = {
+            "parent": {"database_id": parent_id},
+            "properties": {
+                "Name": {"title": [{"text": {"content": data["title"]}}]},
+            },
+            "children": first_batch,
+        }
+        resp = requests.post(
+            "https://api.notion.com/v1/pages",
+            headers=headers,
+            json=db_payload,
+        )
+
     resp.raise_for_status()
-    return resp.json()
+    result = resp.json()
+
+    # Append remaining blocks in batches of 100
+    page_id = result["id"]
+    while remaining:
+        batch = remaining[:100]
+        remaining = remaining[100:]
+        append_resp = requests.patch(
+            f"https://api.notion.com/v1/blocks/{page_id}/children",
+            headers=headers,
+            json={"children": batch},
+        )
+        append_resp.raise_for_status()
+
+    return result
 
 
 class PublisherSkill(BaseSkill):
