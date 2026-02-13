@@ -31,7 +31,7 @@ class BaseSkill(ABC):
         """Load system prompt from .claude/skills/<name>/SKILL.md at runtime."""
         skill_path = Path(f".claude/skills/{self.name}/SKILL.md")
         if skill_path.exists():
-            content = skill_path.read_text()
+            content = skill_path.read_text(encoding="utf-8")
             # Strip YAML frontmatter
             if content.startswith("---"):
                 parts = content.split("---", 2)
