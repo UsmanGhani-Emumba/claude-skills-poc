@@ -2,7 +2,7 @@
 import sys
 from dotenv import load_dotenv
 from rich.console import Console
-from src.config import ANTHROPIC_API_KEY, NOTION_API_KEY, NOTION_DATABASE_ID
+from src.config import ANTHROPIC_API_KEY, NOTION_API_KEY, NOTION_PARENT_ID
 from src.orchestrator.agent import OrchestratorAgent
 
 console = Console()
@@ -13,7 +13,7 @@ def main():
     agent = OrchestratorAgent(
         api_key=ANTHROPIC_API_KEY,
         notion_api_key=NOTION_API_KEY,
-        notion_db_id=NOTION_DATABASE_ID,
+        notion_db_id=NOTION_PARENT_ID,
     )
 
     if len(sys.argv) > 1:

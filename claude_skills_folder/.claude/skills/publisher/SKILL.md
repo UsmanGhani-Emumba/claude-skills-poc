@@ -30,17 +30,39 @@ When invoked:
 
 ---
 
-## Phase 2 — Auto-Batching Strategy
+## Phase 2 — Verify Parent & Auto-Batching Strategy
 
-Notion's API enforces a **100-block limit per request**. The publisher MUST 
-use auto-batching to handle content of any length.
+Before publishing, the publisher MUST verify the parent (from `NOTION_PARENT_ID`)
+actually exists and is accessible. Then use auto-batching to handle any content length.
+
+### Step 0 — Verify Parent Page
+
+The `NOTION_PARENT_ID` env var holds a **page ID** (the parent page under which
+new articles are created as child pages).
+
+```
+Step 0: Verify parent page exists
+   └─ GET /v1/pages/{parent_id}
+       ├─ 200 → extract title for logging, proceed
+       └─ 404/403 → FAIL: page not found or not shared with integration
+   └─ Log: "Verified parent: '{title}' (page_id)"
+```
+
+**Why verify first?**
+- Catches misconfigured `NOTION_PARENT_ID` early with a clear error message
+  instead of a cryptic 400/404 on page creation.
+- Confirms the integration has access to the parent before attempting writes.
 
 ### Auto-Batch Workflow
 
 ```
+Step 0: Verify parent page
+   └─ GET /v1/pages/{parent_id}  →  200? proceed
+   └─ else FAIL with clear error
+
 Step 1: Create EMPTY page
    └─ POST /v1/pages
-   └─ Payload: parent + properties (title, tags, category, summary)
+   └─ Payload: parent(page_id: parent_id) + properties
    └─ NO children in this request
    └─ ✓ Receive page_id
 
@@ -137,6 +159,9 @@ Extract Metadata (title, tags, category, summary)
 Convert body → content_blocks[]
     │
     ▼
+Verify parent page ID (GET /v1/pages/{id})
+    │ → confirmed accessible
+    ▼
 Create EMPTY Notion page (parent + properties only)
     │ → page_id
     ▼
@@ -155,6 +180,9 @@ Return: { page_id, url, blocks_published, batches_sent }
 ---
 
 ## Guidelines
+
+- **Always verify the parent** — confirm the NOTION_PARENT_ID is accessible
+  and detect whether it's a page or database before creating anything.
 
 - **Preserve all content** — never summarize, truncate, or skip sections.
 - **Choose 3-5 relevant tags** — based on the article's core themes.

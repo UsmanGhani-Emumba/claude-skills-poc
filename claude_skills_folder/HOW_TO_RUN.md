@@ -48,7 +48,7 @@ Edit `.env` and add your keys:
 ```
 ANTHROPIC_API_KEY=sk-ant-...        # Required
 NOTION_API_KEY=ntn_...              # Optional (for publishing)
-NOTION_DATABASE_ID=abc123...        # Optional (for publishing)
+NOTION_PARENT_ID=abc123...        # Optional (for publishing)
 ```
 
 ## Running
@@ -100,4 +100,4 @@ You'll see traces for every skill invocation with token counts, latency, and cos
 | `ModuleNotFoundError` | Make sure the venv is activated |
 | `ANTHROPIC_API_KEY not set` | Check your `.env` file |
 | Phoenix not loading | Ensure port 6006 is free, or set `PHOENIX_COLLECTOR_ENDPOINT` in `.env` |
-| Notion publish fails | Verify `NOTION_API_KEY` and `NOTION_DATABASE_ID` in `.env` |
+| Notion publish fails | Verify `NOTION_API_KEY` and `NOTION_PARENT_ID` in `.env` |

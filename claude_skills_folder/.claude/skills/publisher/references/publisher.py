@@ -1,10 +1,15 @@
 import json
 import os
 import re
+import time
 
 import requests
 
 from base import BaseSkill
+
+BATCH_SIZE = 100
+INTER_BATCH_DELAY = 0.35   # 350ms between batches
+MAX_RETRIES = 2
 
 
 def _extract_json_from_content(text: str) -> dict:
@@ -54,13 +59,77 @@ def _to_notion_block(block: dict) -> dict:
     return notion_block
 
 
+def _verify_parent(parent_id: str, headers: dict) -> str:
+    """Verify the parent page exists and is accessible.
+
+    Returns:
+        parent_title — e.g. "Claude Workspace"
+
+    Raises:
+        ValueError if the parent page is not accessible.
+    """
+    resp = requests.get(
+        f"https://api.notion.com/v1/pages/{parent_id}",
+        headers=headers,
+    )
+    if resp.status_code == 200:
+        page = resp.json()
+        props = page.get("properties", {})
+        title = "Untitled"
+        for prop in props.values():
+            if prop.get("type") == "title" and prop.get("title"):
+                title = "".join(t.get("plain_text", "") for t in prop["title"])
+                break
+        return title
+
+    raise ValueError(
+        f"Parent page '{parent_id}' not found or not shared with integration. "
+        f"Status: {resp.status_code}. Ensure the Notion integration has access to the page."
+    )
+
+
+def _chunk(lst: list, size: int) -> list:
+    """Split a list into chunks of `size`."""
+    return [lst[i:i + size] for i in range(0, len(lst), size)]
+
+
+def _append_batch_with_retry(page_id: str, batch: list, headers: dict,
+                              batch_num: int, total_batches: int) -> int:
+    """Append a single batch, retrying on failure. Returns blocks appended."""
+    resp = None
+    for attempt in range(MAX_RETRIES + 1):
+        if attempt > 0:
+            backoff = 1 if attempt == 1 else 3
+            time.sleep(backoff)
+
+        resp = requests.patch(
+            f"https://api.notion.com/v1/blocks/{page_id}/children",
+            headers=headers,
+            json={"children": batch},
+        )
+
+        # Rate limited — honour Retry-After
+        if resp.status_code == 429:
+            retry_after = int(resp.headers.get("Retry-After", 1))
+            time.sleep(retry_after)
+            continue  # don't count as an attempt
+
+        if resp.status_code < 400:
+            return len(batch)
+
+    raise RuntimeError(
+        f"Batch {batch_num}/{total_batches} failed after {MAX_RETRIES} retries: "
+        f"{resp.status_code} {resp.text[:200]}"
+    )
+
+
 def _publish_to_notion_rest(data: dict) -> dict:
-    """Publish to Notion via REST API using env vars for auth."""
+    """Publish to Notion via REST API with parent verification + auto-batching."""
     api_key = os.getenv("NOTION_API_KEY")
-    parent_id = os.getenv("NOTION_DATABASE_ID")
+    parent_id = os.getenv("NOTION_PARENT_ID")
 
     if not api_key or not parent_id:
-        raise ValueError("NOTION_API_KEY and NOTION_DATABASE_ID must be set in .env")
+        raise ValueError("NOTION_API_KEY and NOTION_PARENT_ID must be set in .env")
 
     headers = {
         "Authorization": f"Bearer {api_key}",
@@ -68,19 +137,19 @@ def _publish_to_notion_rest(data: dict) -> dict:
         "Notion-Version": "2022-06-28",
     }
 
+    # ── Step 0: Verify parent page exists ──────────────────────────────────
+    parent_title = _verify_parent(parent_id, headers)
+
     children = [_to_notion_block(block) for block in data.get("content_blocks", [])]
+    batches = _chunk(children, BATCH_SIZE)
 
-    # Notion limits children to 100 blocks per request — batch if needed
-    first_batch = children[:100]
-    remaining = children[100:]
-
-    # Try as page parent first (most common), fall back to database parent
+    # ── Step 1: Create EMPTY child page (no children) ─────────────────────
     page_payload = {
         "parent": {"page_id": parent_id},
         "properties": {
             "title": [{"text": {"content": data["title"]}}],
         },
-        "children": first_batch,
+        # NO children — empty page first for safe batching
     }
 
     resp = requests.post(
@@ -88,37 +157,21 @@ def _publish_to_notion_rest(data: dict) -> dict:
         headers=headers,
         json=page_payload,
     )
-
-    # If page_id fails, retry as database_id
-    if resp.status_code == 400 or resp.status_code == 404:
-        db_payload = {
-            "parent": {"database_id": parent_id},
-            "properties": {
-                "Name": {"title": [{"text": {"content": data["title"]}}]},
-            },
-            "children": first_batch,
-        }
-        resp = requests.post(
-            "https://api.notion.com/v1/pages",
-            headers=headers,
-            json=db_payload,
-        )
-
     resp.raise_for_status()
     result = resp.json()
-
-    # Append remaining blocks in batches of 100
     page_id = result["id"]
-    while remaining:
-        batch = remaining[:100]
-        remaining = remaining[100:]
-        append_resp = requests.patch(
-            f"https://api.notion.com/v1/blocks/{page_id}/children",
-            headers=headers,
-            json={"children": batch},
-        )
-        append_resp.raise_for_status()
 
+    # ── Step 2: Append content in batches of 100 ───────────────────────────
+    blocks_published = 0
+    for i, batch in enumerate(batches, 1):
+        blocks_published += _append_batch_with_retry(
+            page_id, batch, headers, i, len(batches)
+        )
+        if i < len(batches):
+            time.sleep(INTER_BATCH_DELAY)
+
+    result["blocks_published"] = blocks_published
+    result["batches_sent"] = len(batches)
     return result
 
 
