@@ -1,0 +1,11 @@
+google-generativeai
+notion-client
+arize
+arize-phoenix
+python-dotenv
+googlesearch-python
+beautifulsoup4
+requests
+youtube-transcript-api
+pandas
+termcolor
