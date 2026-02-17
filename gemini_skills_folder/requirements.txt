@@ -1,7 +1,12 @@
-google-generativeai
+google-genai
 notion-client
 arize
 arize-phoenix
+arize-phoenix-otel
+openinference-instrumentation-google-genai
+opentelemetry-api
+opentelemetry-sdk
+opentelemetry-exporter-otlp
 python-dotenv
 googlesearch-python
 beautifulsoup4
