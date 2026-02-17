@@ -2,33 +2,15 @@ import json
 import re
 import time
 
-INTENT_SYSTEM_PROMPT = """You are an intent classifier for a content pipeline.
-Analyze the user's prompt and determine routing.
-
-Available skills: researcher, writer, reviewer, publisher, full_pipeline
-
-Respond with ONLY a raw JSON object, no markdown fences, no extra text:
-{"intent": "researcher", "confidence": 0.95, "reasoning": "Brief explanation", "extracted_topic": "The core topic", "publish_to_notion": false}
-
-Rules:
-- "write an article about X" or "create content about X" → full_pipeline
-- "research X" or "find information about X" → researcher
-- "write/draft X" with provided context → writer
-- "review this" or "edit this" → reviewer
-- "publish this to Notion" → publisher
-- Default to full_pipeline if ambiguous and content-related"""
-
 
 def _extract_json(text: str) -> dict:
     """Extract JSON from a response that may contain markdown fences or extra text."""
-    # Try direct parse first
     text = text.strip()
     try:
         return json.loads(text)
     except json.JSONDecodeError:
         pass
 
-    # Strip markdown code fences (```json ... ``` or ``` ... ```)
     fenced = re.search(r"```(?:json)?\s*\n?(.*?)\n?\s*```", text, re.DOTALL)
     if fenced:
         try:
@@ -36,7 +18,6 @@ def _extract_json(text: str) -> dict:
         except json.JSONDecodeError:
             pass
 
-    # Find first { ... } block
     brace_match = re.search(r"\{.*\}", text, re.DOTALL)
     if brace_match:
         try:
@@ -48,17 +29,43 @@ def _extract_json(text: str) -> dict:
 
 
 class IntentDetector:
-    def __init__(self, client, model, metrics_collector):
+    def __init__(self, client, model, metrics_collector, skill_descriptions: dict[str, str] = None):
         self.client = client
         self.model = model
         self.metrics = metrics_collector
+        self._skill_descriptions = skill_descriptions or {}
+
+    @property
+    def system_prompt(self) -> str:
+        skill_list = ", ".join(
+            list(self._skill_descriptions.keys()) + ["full_pipeline"]
+        )
+        skill_details = "\n".join(
+            f"- {name}: {desc}" for name, desc in self._skill_descriptions.items()
+        )
+        return f"""You are an intent classifier for a content pipeline.
+Analyze the user's prompt and determine routing.
+
+Available skills: {skill_list}
+
+Skill descriptions:
+{skill_details}
+- full_pipeline: Run the full content pipeline (research -> write -> review -> publish)
+
+Respond with ONLY a raw JSON object, no markdown fences, no extra text:
+{{"intent": "<skill_name>", "confidence": 0.95, "reasoning": "Brief explanation", "extracted_topic": "The core topic", "publish_to_notion": false}}
+
+Rules:
+- "write an article about X" or "create content about X" -> full_pipeline
+- Default to full_pipeline if ambiguous and content-related
+- Match user intent to the most specific skill available"""
 
     def detect(self, user_prompt: str) -> dict:
         start = time.perf_counter()
         response = self.client.messages.create(
             model=self.model,
             max_tokens=1024,
-            system=INTENT_SYSTEM_PROMPT,
+            system=self.system_prompt,
             messages=[{"role": "user", "content": user_prompt}],
         )
         latency = time.perf_counter() - start

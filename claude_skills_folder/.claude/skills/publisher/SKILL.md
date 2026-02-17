@@ -1,65 +1,48 @@
 ---
 name: publisher
-description: Formats finalized content and publishes to Notion via MCP or REST API. Implements a strictly sequential 4-phase process: Verify Parent, Create Empty Page, Auto-Batched Content Insertion, and Status Reporting.
+description: Formats finalized content into structured JSON for Notion publishing. Extracts metadata, structures content blocks, and produces publish-ready output. The actual Notion API interaction is handled by the implementation code.
 ---
 
 # Publisher Skill
 
-## Overview
-
-You are a content publisher responsible for reliably transferring finalized content into Notion. You must follow a strict sequential logic to ensure reliability, handle rate limits (429 errors), and maintain content integrity. (Implementation logic is based on `.claude/skills/publisher/references/publisher.py`).
+You are a content publisher. Your job is to transform finalized content into a structured JSON format ready for Notion publishing.
 
 ---
 
-## Execution Logic
+## What You Do
 
-### Phase 1 — Verification & Extraction
-Before any write operations, ensure the environment and content are ready.
+1. **Extract metadata** from the content: title, tags, category, and summary.
+2. **Structure the body** into Notion-compatible content blocks.
+3. **Return valid JSON** that the publishing pipeline can send to Notion.
 
-1. **Verify Parent ID**: Check if `NOTION_PARENT_ID` exists and is accessible.
-   - **Action**: Call `GET /v1/pages/{parent_id}` (Refer to `.claude/skills/publisher/references/notion_api_specs.md`).
-   - **Constraint**: If failed (403/404), return a clear error and **STOP**.
-2. **Extract Metadata**:
-   - `title` — Compelling article title.
-   - `tags` — 3-5 relevant tags.
-   - `category` — Single category classification.
-   - `summary` — 1-2 sentence description.
-3. **Structure Blocks**:
-   - Map headings, paragraphs, lists, code blocks, and callouts.
-   - **Chunking**: Break any paragraph > 2,000 characters into multiple blocks.
+You do NOT call the Notion API directly — that is handled by the implementation code in `references/publisher.py`. Your sole responsibility is producing well-structured output.
 
-### Phase 2 — Create Empty Page
-Initialize the article in Notion as an empty container.
+---
 
-1. **Action**: Create an empty page under the verified parent using ONLY title and properties.
-   - **Method**: `POST /v1/pages`.
-2. **Constraint**: If page creation fails, return a specific error and **STOP**.
-3. **Capture ID**: Store the newly created `page_id` for Phase 3.
+## Content Structuring Rules
 
-### Phase 3 — Auto-Batched Content Insertion
-Publish the body content while bypassing rate limits and block constraints.
+When converting content into blocks:
 
-1. **Calculate Batches**: Split `content_blocks` into chunks of exactly **100 blocks** each.
-2. **Sequential Append**: Use `PATCH /v1/blocks/{page_id}/children` for each batch.
-3. **Rate Limit Bypass (Anti-429)**:
-   - **Delay**: Implement a mandatory **350ms delay** between every batch request.
-   - **Retries**: On a 429 error, wait for the `Retry-After` header (or 2s) and retry the batch (max 2 retries).
-4. **Finalize**: Once all batches are successfully appended, return the final Notion URL (e.g., `https://www.notion.so/article-name-ID`).
+- Use `heading_2` for major sections and `heading_3` for subsections.
+- Use `paragraph` for body text. Break any paragraph over 2,000 characters into multiple blocks.
+- Use `bulleted_list_item` or `numbered_list_item` for lists.
+- Use `code` blocks with the correct `language` for code snippets.
+- Use `callout` blocks for tips, warnings, or key takeaways.
+- Use `divider` to separate major sections.
+- **Never** summarize or truncate the body content — preserve everything.
 
-### Phase 4 — Status Reporting
-1. **Pass**: If the process completes successfully, set `status` to `"passed"` and provide the **actual** `notion_url` returned by the API call. **DO NOT use placeholder URLs like "your-page-url"**.
-2. **Failure**: If any phase fails, set `status` to `"failed"`, provide a clear `error_message`, and omit the URL.
+For detailed Notion formatting guidelines, refer to `references/notion_api_specs.md`.
 
 ---
 
 ## Output Format
 
-Return ONLY the JSON object below — no conversational filler or extra text:
+Return ONLY a JSON object — no conversational text or markdown fences:
 
 ```json
 {
     "status": "passed",
-    "notion_url": "https://www.notion.so/your-page-url",
+    "notion_url": "",
     "error_message": "",
     "title": "Article Title",
     "tags": ["tag1", "tag2", "tag3"],
@@ -76,19 +59,12 @@ Return ONLY the JSON object below — no conversational filler or extra text:
 }
 ```
 
----
+### Field Requirements
 
-## Error Handling
-
-- **Verification Fail**: Return `published: false` with "Parent ID Access Denied".
-- **Creation Fail**: Return `published: false` with "Initial Page Creation Failed".
-- **Batch Fail**: Stop immediately and return `published: partial` with the number of batches completed and the error reason.
-
----
-
-## Guidelines
-
-- **NEVER** summarize or truncate the body content; preserve everything.
-- **ALWAYS** verify the parent before attempting to create a page.
-- **ALWAYS** use the empty-page-first strategy to ensure atomicity.
-- **ALWAYS** apply the 350ms delay to prevent rate limiting.
+- **title**: Compelling, descriptive article title.
+- **tags**: 3-5 relevant tags for categorization.
+- **category**: Single category classification.
+- **summary**: 1-2 sentence description of the content.
+- **content_blocks**: Complete structured body — every section, paragraph, and element from the original content.
+- **status**: Set to `"passed"` (the pipeline will update this based on actual publish result).
+- **notion_url**: Leave empty (populated by the pipeline after publishing).

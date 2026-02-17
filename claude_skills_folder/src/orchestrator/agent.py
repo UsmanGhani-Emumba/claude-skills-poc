@@ -7,10 +7,7 @@ from src.observability.tracer import launch_phoenix, setup_observability, _slugi
 from src.observability.metrics import MetricsCollector
 from src.orchestrator.intent import IntentDetector
 from src.orchestrator.pipeline import Pipeline
-from researcher.references.researcher import ResearcherSkill
-from writer.references.writer import WriterSkill
-from reviewer.references.reviewer import ReviewerSkill
-from publisher.references.publisher import PublisherSkill
+from registry import SkillRegistry
 
 console = Console()
 
@@ -27,19 +24,26 @@ class OrchestratorAgent:
         # Step 3: Metrics
         self.metrics = MetricsCollector(INPUT_COST_PER_1K, OUTPUT_COST_PER_1K)
 
-        # Step 4: Intent detector
-        self.intent_detector = IntentDetector(self.client, self.model, self.metrics)
+        # Step 4: Auto-discover skills from .claude/skills/*/SKILL.md
+        self.registry = SkillRegistry()
+        self.registry.discover()
 
-        # Step 5: Skills (read prompts from .claude/skills/ at runtime)
-        self.researcher = ResearcherSkill(self.client, self.model, self.metrics)
-        self.writer = WriterSkill(self.client, self.model, self.metrics)
-        self.reviewer = ReviewerSkill(self.client, self.model, self.metrics)
+        # Step 5: Intent detector (with dynamic skill descriptions)
+        self.intent_detector = IntentDetector(
+            self.client, self.model, self.metrics,
+            skill_descriptions=self.registry.get_skill_descriptions(),
+        )
 
-        # Step 6: Publisher
-        self.publisher = PublisherSkill(self.client, self.model, self.metrics)
+        # Step 6: Load all skills (publisher gets extra kwargs)
+        self.skills = self.registry.load_all(
+            self.client, self.model, self.metrics,
+            extra_kwargs={
+                "publisher": {"notion_mcp_client": None},
+            },
+        )
 
         # Step 7: Pipeline
-        self.pipeline = Pipeline(self.researcher, self.writer, self.reviewer, self.publisher)
+        self.pipeline = Pipeline(self.skills)
 
     def run(self, user_prompt: str) -> dict:
         console.print(f"\n[bold]Prompt:[/bold] {user_prompt}\n")
@@ -62,18 +66,12 @@ class OrchestratorAgent:
         self.tracer_provider = setup_observability(project_name)
         console.print(f"[dim]Phoenix project: {project_name}[/dim]\n")
 
-        # Route
+        # Route dynamically
         if intent == "full_pipeline":
             publish = intent_result.get("publish_to_notion", True)
             result = self.pipeline.run(topic, publish=publish)
-        elif intent == "researcher":
-            result = self.researcher.execute(topic)
-        elif intent == "writer":
-            result = self.writer.execute(topic)
-        elif intent == "reviewer":
-            result = self.reviewer.execute(topic)
-        elif intent == "publisher":
-            result = self.publisher.execute(topic)
+        elif intent in self.skills:
+            result = self.skills[intent].execute(topic)
         else:
             result = self.pipeline.run(topic)
 
