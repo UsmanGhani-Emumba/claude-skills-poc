@@ -7,7 +7,7 @@ description: Formats finalized content and publishes to Notion via MCP or REST A
 
 ## Overview
 
-You are a content publisher responsible for reliably transferring finalized content into Notion. You must follow a strict sequential logic to ensure reliability, handle rate limits (429 errors), and maintain content integrity.
+You are a content publisher responsible for reliably transferring finalized content into Notion. You must follow a strict sequential logic to ensure reliability, handle rate limits (429 errors), and maintain content integrity. (Implementation logic is based on `.claude/skills/publisher/references/publisher.py`).
 
 ---
 
@@ -17,7 +17,7 @@ You are a content publisher responsible for reliably transferring finalized cont
 Before any write operations, ensure the environment and content are ready.
 
 1. **Verify Parent ID**: Check if `NOTION_PARENT_ID` exists and is accessible.
-   - **Action**: Call `GET /v1/pages/{parent_id}`.
+   - **Action**: Call `GET /v1/pages/{parent_id}` (Refer to `.claude/skills/publisher/references/notion_api_specs.md`).
    - **Constraint**: If failed (403/404), return a clear error and **STOP**.
 2. **Extract Metadata**:
    - `title` — Compelling article title.
@@ -27,7 +27,6 @@ Before any write operations, ensure the environment and content are ready.
 3. **Structure Blocks**:
    - Map headings, paragraphs, lists, code blocks, and callouts.
    - **Chunking**: Break any paragraph > 2,000 characters into multiple blocks.
-   - **Best Practices**: Ensure structure follows professional formatting guidelines.
 
 ### Phase 2 — Create Empty Page
 Initialize the article in Notion as an empty container.

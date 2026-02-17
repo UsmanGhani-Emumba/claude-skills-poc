@@ -121,10 +121,10 @@ def _append_batch_with_retry(page_id: str, batch: list, headers: dict, batch_num
 
 def publish_to_notion(data: dict) -> dict:
     api_key = os.getenv("NOTION_API_KEY")
-    parent_id = os.getenv("NOTION_PARENT_PAGE_ID")
+    parent_id = os.getenv("NOTION_PARENT_ID")
 
     if not api_key or not parent_id:
-        raise ValueError("NOTION_API_KEY and NOTION_PARENT_PAGE_ID must be set.")
+        raise ValueError("NOTION_API_KEY and NOTION_PARENT_ID must be set.")
 
     headers = {
         "Authorization": f"Bearer {api_key}",

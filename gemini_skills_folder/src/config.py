@@ -6,7 +6,7 @@ load_dotenv()
 class Config:
     GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
     NOTION_API_KEY = os.getenv("NOTION_API_KEY")
-    NOTION_PARENT_PAGE_ID = os.getenv("NOTION_PARENT_PAGE_ID", "2ff01e7f802c8041bb7bf826722f02da")
+    NOTION_PARENT_ID = os.getenv("NOTION_PARENT_ID", "2ff01e7f802c8041bb7bf826722f02da")
     ARIZE_SPACE_KEY = os.getenv("ARIZE_SPACE_KEY")
     ARIZE_API_KEY = os.getenv("ARIZE_API_KEY")
 

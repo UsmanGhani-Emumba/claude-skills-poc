@@ -33,7 +33,7 @@ pip install -r requirements.txt
 ```env
 GEMINI_API_KEY=your_google_gemini_api_key
 NOTION_API_KEY=your_notion_integration_token
-NOTION_PARENT_PAGE_ID=2ff01e7f802c8041bb7bf826722f02da
+NOTION_PARENT_ID=2ff01e7f802c8041bb7bf826722f02da
 ARIZE_SPACE_KEY=your_arize_space_key
 ARIZE_API_KEY=your_arize_api_key
 ```
