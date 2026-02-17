@@ -45,7 +45,11 @@ Publish the body content while bypassing rate limits and block constraints.
 3. **Rate Limit Bypass (Anti-429)**:
    - **Delay**: Implement a mandatory **350ms delay** between every batch request.
    - **Retries**: On a 429 error, wait for the `Retry-After` header (or 2s) and retry the batch (max 2 retries).
-4. **Finalize**: Once all batches are successfully appended, return the final Notion URL.
+4. **Finalize**: Once all batches are successfully appended, return the final Notion URL (e.g., `https://www.notion.so/article-name-ID`).
+
+### Phase 4 — Status Reporting
+1. **Pass**: If the process completes successfully, set `status` to `"passed"` and provide the **actual** `notion_url` returned by the API call. **DO NOT use placeholder URLs like "your-page-url"**.
+2. **Failure**: If any phase fails, set `status` to `"failed"`, provide a clear `error_message`, and omit the URL.
 
 ---
 
@@ -55,6 +59,9 @@ Return ONLY the JSON object below — no conversational filler or extra text:
 
 ```json
 {
+    "status": "passed",
+    "notion_url": "https://www.notion.so/your-page-url",
+    "error_message": "",
     "title": "Article Title",
     "tags": ["tag1", "tag2", "tag3"],
     "category": "Category Name",
