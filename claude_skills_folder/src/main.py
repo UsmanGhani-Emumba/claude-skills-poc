@@ -12,8 +12,6 @@ def main():
     load_dotenv()
     agent = OrchestratorAgent(
         api_key=ANTHROPIC_API_KEY,
-        notion_api_key=NOTION_API_KEY,
-        notion_db_id=NOTION_PARENT_ID,
     )
 
     if len(sys.argv) > 1:

@@ -16,7 +16,7 @@ console = Console()
 
 
 class OrchestratorAgent:
-    def __init__(self, api_key: str, notion_api_key: str = None, notion_db_id: str = None):
+    def __init__(self, api_key: str):
         # Step 1: Launch Phoenix UI (tracer registered later with topic name)
         launch_phoenix()
 
@@ -35,16 +35,8 @@ class OrchestratorAgent:
         self.writer = WriterSkill(self.client, self.model, self.metrics)
         self.reviewer = ReviewerSkill(self.client, self.model, self.metrics)
 
-        # Step 6: Publisher with optional MCP
-        notion_client = None
-        if notion_api_key and notion_db_id:
-            import asyncio
-            from src.mcp.notion_client import NotionMCPClient
-            loop = asyncio.new_event_loop()
-            notion_client = loop.run_until_complete(
-                NotionMCPClient(notion_api_key, notion_db_id).connect()
-            )
-        self.publisher = PublisherSkill(self.client, self.model, self.metrics, notion_client)
+        # Step 6: Publisher
+        self.publisher = PublisherSkill(self.client, self.model, self.metrics)
 
         # Step 7: Pipeline
         self.pipeline = Pipeline(self.researcher, self.writer, self.reviewer, self.publisher)
