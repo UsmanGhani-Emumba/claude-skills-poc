@@ -57,7 +57,7 @@ class BaseAgent:
                     contents=prompt,
                     config=types.GenerateContentConfig(
                         tools=self.tools,
-                        automatic_function_calling=types.AutomaticFunctionCallingConfig(max_remote_calls=10)
+                        automatic_function_calling=types.AutomaticFunctionCallingConfig(disable=False)
                     )
                 )
                 
