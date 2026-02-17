@@ -72,7 +72,14 @@ class OrchestratorAgent:
             result = self.pipeline.run(topic, publish=publish)
         elif intent in self.skills:
             result = self.skills[intent].execute(topic)
+        elif intent == "unknown":
+            console.print(
+                "[bold yellow]No matching skill found for this request.[/bold yellow]\n"
+                f"Available skills: {', '.join(self.skills.keys())}"
+            )
+            result = {"error": "No matching skill for this request", "topic": topic}
         else:
+            console.print(f"[dim]Unknown intent '{intent}', falling back to full pipeline[/dim]")
             result = self.pipeline.run(topic)
 
         # Summary
