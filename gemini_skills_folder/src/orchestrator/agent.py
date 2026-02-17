@@ -10,15 +10,12 @@ from src.observability.metrics import MetricsCollector
 from src.orchestrator.intent import IntentDetector
 from src.orchestrator.pipeline import Pipeline
 
-# Add .gemini/skills to sys.path to allow importing skills
+# Add .gemini/skills to sys.path so registry and skill modules are importable
 skills_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", ".gemini", "skills"))
 if skills_path not in sys.path:
     sys.path.insert(0, skills_path)
 
-from researcher.references.researcher import ResearcherSkill
-from writer.references.writer import WriterSkill
-from reviewer.references.reviewer import ReviewerSkill
-from publisher.references.notion_publish import PublisherSkill
+from registry import SkillRegistry
 
 console = Console()
 
@@ -35,17 +32,23 @@ class OrchestratorAgent:
         # Step 3: Metrics
         self.metrics = MetricsCollector(Config.INPUT_COST_PER_1K, Config.OUTPUT_COST_PER_1K)
 
-        # Step 4: Intent detector
-        self.intent_detector = IntentDetector(self.client, self.model, self.metrics)
+        # Step 4: Auto-discover skills from .gemini/skills/*/SKILL.md
+        self.registry = SkillRegistry()
+        self.registry.discover()
 
-        # Step 5: Skills
-        self.researcher = ResearcherSkill(self.client, self.model, self.metrics)
-        self.writer = WriterSkill(self.client, self.model, self.metrics)
-        self.reviewer = ReviewerSkill(self.client, self.model, self.metrics)
-        self.publisher = PublisherSkill(self.client, self.model, self.metrics)
+        # Step 5: Intent detector (with dynamic skill descriptions)
+        self.intent_detector = IntentDetector(
+            self.client, self.model, self.metrics,
+            skill_descriptions=self.registry.get_skill_descriptions(),
+        )
 
-        # Step 6: Pipeline
-        self.pipeline = Pipeline(self.researcher, self.writer, self.reviewer, self.publisher)
+        # Step 6: Load all skills
+        self.skills = self.registry.load_all(
+            self.client, self.model, self.metrics,
+        )
+
+        # Step 7: Pipeline
+        self.pipeline = Pipeline(self.skills)
 
     def run(self, user_prompt: str) -> dict:
         console.print(f"\n[bold]Prompt:[/bold] {user_prompt}\n")
@@ -67,19 +70,20 @@ class OrchestratorAgent:
         self.tracer_provider = setup_observability(project_name)
         console.print(f"[dim]Phoenix project: {project_name}[/dim]\n")
 
-        # Route
+        # Route dynamically
         if intent == "full_pipeline":
             publish = intent_result.get("publish_to_notion", True)
             result = self.pipeline.run(topic, publish=publish)
-        elif intent == "researcher":
-            result = self.researcher.execute(topic)
-        elif intent == "writer":
-            result = self.writer.execute(topic)
-        elif intent == "reviewer":
-            result = self.reviewer.execute(topic)
-        elif intent == "publisher":
-            result = self.publisher.execute(topic)
+        elif intent in self.skills:
+            result = self.skills[intent].execute(topic)
+        elif intent == "unknown":
+            console.print(
+                "[bold yellow]No matching skill found for this request.[/bold yellow]\n"
+                f"Available skills: {', '.join(self.skills.keys())}"
+            )
+            result = {"error": "No matching skill for this request", "topic": topic}
         else:
+            console.print(f"[dim]Unknown intent '{intent}', falling back to full pipeline[/dim]")
             result = self.pipeline.run(topic)
 
         # Summary
