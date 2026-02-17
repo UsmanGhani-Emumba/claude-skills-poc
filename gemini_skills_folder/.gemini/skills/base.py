@@ -13,9 +13,10 @@ class BaseSkill(ABC):
     2. Wraps a single Gemini API call with tracing
     """
 
-    def __init__(self, client: genai.Client, model: str = "gemini-2.0-flash"):
+    def __init__(self, client: genai.Client, model: str, metrics_collector):
         self.client = client
         self.model = model
+        self.metrics = metrics_collector
         self.tracer = trace.get_tracer(__name__)
 
     @property
@@ -68,11 +69,16 @@ class BaseSkill(ABC):
                 latency = time.perf_counter() - start
                 
                 content = response.text
+                skill_metrics = self.metrics.record(self.name, response, latency)
+
                 span.set_attribute("llm.output", content)
-                span.set_attribute("skill.latency_ms", latency * 1000)
+                span.set_attribute("skill.input_tokens", skill_metrics.input_tokens)
+                span.set_attribute("skill.output_tokens", skill_metrics.output_tokens)
+                span.set_attribute("skill.latency_ms", skill_metrics.latency_ms)
+                span.set_attribute("skill.cost_usd", skill_metrics.cost_usd)
                 span.set_status(Status(StatusCode.OK))
 
-                return {"content": content, "latency_sec": latency}
+                return {"content": content, "metrics": skill_metrics}
             except Exception as e:
                 span.record_exception(e)
                 span.set_status(Status(StatusCode.ERROR, str(e)))

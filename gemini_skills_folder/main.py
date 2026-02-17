@@ -1,14 +1,15 @@
 import os
 import sys
 from dotenv import load_dotenv
+from rich.console import Console
 
 # Add src to python path
 sys.path.append(os.path.join(os.path.dirname(__file__), 'src'))
 
-from src.orchestrator import Orchestrator
+from src.orchestrator.agent import OrchestratorAgent
 from src.config import Config
-import phoenix as px
-from phoenix.otel import register
+
+console = Console()
 
 def main():
     # Load environment variables
@@ -17,42 +18,33 @@ def main():
     try:
         Config.validate()
     except ValueError as e:
-        print(f"Config Error: {e}")
+        console.print(f"[bold red]Config Error:[/bold red] {e}")
         return
 
-    # Initialize Arize Phoenix for observability
-    print("Initializing Arize Phoenix tracing...")
-    session = px.launch_app()
+    agent = OrchestratorAgent(api_key=Config.GEMINI_API_KEY)
     
-    # Configure OpenTelemetry to export to Phoenix using the modern register method
-    # auto_instrument=True will detect openinference-instrumentation-google-genai
-    register(
-        project_name="gemini-orchestrator",
-        endpoint="http://localhost:6006/v1/traces",
-        auto_instrument=True
-    )
-    
-    print(f"Phoenix UI available at: {session.url}")
-
-    orchestrator = Orchestrator()
-    
-    print("\n--- Gemini Skill Orchestrator (genai v1) Ready ---")
+    console.print("\n--- [bold green]Gemini Skill Orchestrator Ready[/bold green] ---\n")
     
     while True:
         try:
-            topic = input("\nEnter a topic (or 'exit' to quit): ").strip()
+            prompt = console.input("[bold blue]You:[/bold blue] ").strip()
             
-            if topic.lower() == 'exit':
+            if prompt.lower() in ('exit', 'quit', 'q'):
                 break
                 
-            if topic:
-                result = orchestrator.execute(topic)
-                print(f"\nFINAL RESULT:\n{result}")
+            if prompt:
+                result = agent.run(prompt)
+                # Display final content if it exists
+                final = result.get("final_content") or result.get("content", "")
+                if final:
+                    console.print(f"\n[bold]Final Output:[/bold]\n{final}\n")
                 
         except KeyboardInterrupt:
             break
         except Exception as e:
-            print(f"\nAn error occurred: {e}")
+            console.print(f"\n[bold red]An error occurred:[/bold red] {e}")
+
+    console.print("\n[dim]Goodbye![/dim]")
 
 if __name__ == "__main__":
     main()

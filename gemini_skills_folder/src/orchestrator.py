@@ -109,11 +109,11 @@ class Orchestrator(BaseAgent):
         Analyze the following user request and determine which skills are needed to fulfill it.
         Available Skills: {list(self.skills.keys())}
 
-        If the user wants a full blog post from scratch, the sequence is: blog-researcher -> blog-writer -> blog-reviewer -> blog-publisher.
+        If the user wants a full research and publication cycle, the sequence is: researcher -> writer -> reviewer -> publisher.
         If the user only wants specific tasks, only include those.
 
         Return a JSON list of objects representing the plan.
-        Example: [{{"skill": "blog-researcher", "task": "..."}}]
+        Example: [{{"skill": "researcher", "task": "..."}}]
         
         User Request: {user_input}
         """

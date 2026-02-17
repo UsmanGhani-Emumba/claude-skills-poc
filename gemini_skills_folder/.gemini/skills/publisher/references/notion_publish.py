@@ -196,8 +196,8 @@ class PublisherSkill(BaseSkill):
     name = "publisher"
     _fallback_prompt = "You are a content publisher. Format content for Notion with title, tags, category, summary, and content_blocks as JSON."
 
-    def __init__(self, client, model="gemini-2.0-flash", notion_mcp_client=None):
-        super().__init__(client, model)
+    def __init__(self, client, model, metrics_collector, notion_mcp_client=None):
+        super().__init__(client, model, metrics_collector)
         self.notion = notion_mcp_client
 
     def execute(self, user_message: str, context: dict = None) -> dict:

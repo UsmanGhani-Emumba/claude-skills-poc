@@ -10,6 +10,14 @@ class Config:
     ARIZE_SPACE_KEY = os.getenv("ARIZE_SPACE_KEY")
     ARIZE_API_KEY = os.getenv("ARIZE_API_KEY")
 
+    MODEL_NAME = os.getenv("MODEL_NAME", "gemini-2.0-flash")
+    MAX_TOKENS = 8192
+    CONTEXT_WINDOW = 1000000
+
+    # Cost per 1K tokens (Gemini 2.0 Flash pricing)
+    INPUT_COST_PER_1K = 0.0001
+    OUTPUT_COST_PER_1K = 0.0004
+
     @staticmethod
     def validate():
         if not Config.GEMINI_API_KEY:
