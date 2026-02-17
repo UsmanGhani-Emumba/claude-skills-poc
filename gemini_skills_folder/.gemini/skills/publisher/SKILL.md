@@ -17,7 +17,7 @@ You are a content publisher responsible for reliably transferring finalized cont
 Before any write operations, ensure the environment and content are ready.
 
 1. **Verify Parent ID**: Check if `NOTION_PARENT_ID` exists and is accessible.
-   - **Action**: Call `GET /v1/pages/{parent_id}` (Refer to `notion_api_specs.md`).
+   - **Action**: Call `GET /v1/pages/{parent_id}` (Refer to `.gemini/skills/publisher/references/notion_api_specs.md`).
    - **Constraint**: If failed (403/404), return a clear error and **STOP**.
 2. **Extract Metadata**:
    - `title` — Compelling article title.
@@ -27,7 +27,7 @@ Before any write operations, ensure the environment and content are ready.
 3. **Structure Blocks**:
    - Map headings, paragraphs, lists, code blocks, and callouts.
    - **Chunking**: Break any paragraph > 2,000 characters into multiple blocks.
-   - **Best Practices**: Ensure structure follows `notion_best_practices.md`.
+   - **Best Practices**: Ensure structure follows `.gemini/skills/reviewer/references/notion_best_practices.md`.
 
 ### Phase 2 — Create Empty Page
 Initialize the article in Notion as an empty container.
