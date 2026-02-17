@@ -30,79 +30,38 @@ When invoked:
 
 ---
 
-## Phase 2 — Verify Parent & Auto-Batching Strategy
+## Phase 1 — Verify Parent & Context Preparation
 
-Before publishing, the publisher MUST verify the parent (from `NOTION_PARENT_ID`)
-actually exists and is accessible. Then use auto-batching to handle any content length.
+Before any write operations, the publisher MUST ensure the environment is valid.
 
-### Step 0 — Verify Parent Page
+1. **Verify Parent ID**: Check if `NOTION_PARENT_ID` exists and is accessible.
+   - **Method**: `GET /v1/pages/{parent_id}` (reference: `notion_api_specs.md`)
+   - **Constraint**: If failed (403/404), return a clear error and **STOP**. Do not proceed.
+2. **Extract Metadata**:
+   - `title`, `tags`, `category`, `summary`.
+3. **Structure Blocks**:
+   - Convert content into Notion-compatible JSON blocks.
+   - **Limit Paragraphs**: Ensure no single block exceeds 2,000 characters.
 
-The `NOTION_PARENT_ID` env var holds a **page ID** (the parent page under which
-new articles are created as child pages).
+## Phase 2 — Create Empty Page
 
-```
-Step 0: Verify parent page exists
-   └─ GET /v1/pages/{parent_id}
-       ├─ 200 → extract title for logging, proceed
-       └─ 404/403 → FAIL: page not found or not shared with integration
-   └─ Log: "Verified parent: '{title}' (page_id)"
-```
+Initialize the article in Notion.
 
-**Why verify first?**
-- Catches misconfigured `NOTION_PARENT_ID` early with a clear error message
-  instead of a cryptic 400/404 on page creation.
-- Confirms the integration has access to the parent before attempting writes.
+1. **Create Page**: Create an empty page under the verified parent using ONLY the title and properties.
+   - **Method**: `POST /v1/pages`
+   - **Constraint**: If page creation fails, return an error and **STOP**.
+2. **Retrieve ID**: Capture the new `page_id` for content insertion.
 
-### Auto-Batch Workflow
+## Phase 3 — Auto-Batched Content Insertion
 
-```
-Step 0: Verify parent page
-   └─ GET /v1/pages/{parent_id}  →  200? proceed
-   └─ else FAIL with clear error
+Publish the body content reliably.
 
-Step 1: Create EMPTY page
-   └─ POST /v1/pages
-   └─ Payload: parent(page_id: parent_id) + properties
-   └─ NO children in this request
-   └─ ✓ Receive page_id
-
-Step 2: Calculate batches
-   └─ total_blocks = len(content_blocks)
-   └─ batch_count = ceil(total_blocks / 100)
-   └─ batches = chunk(content_blocks, 100)
-
-Step 3: Append batches sequentially
-   └─ For each batch (1..N):
-       └─ PATCH /v1/blocks/{page_id}/children
-       └─ Payload: {"children": batch}
-       └─ Wait for success before next batch
-       └─ On failure: retry up to 2 times with exponential backoff
-```
-
-### Why Empty Page First?
-
-- **Atomicity**: If batching fails mid-way, the page still exists with partial 
-  content rather than failing entirely on creation.
-- **Idempotency**: The page_id is known upfront, so retries can target the 
-  correct page without creating duplicates.
-- **No block limit on creation**: The create-page endpoint also has a 100-block 
-  limit on `children`, so even the first request would need batching otherwise.
-
-### Batch Size Rules
-
-| Total Blocks | Batches | Strategy                                    |
-|--------------|---------|---------------------------------------------|
-| ≤ 100        | 1       | Single append after page creation            |
-| 101-200      | 2       | Two sequential appends                       |
-| 201-500      | 3-5     | Multiple appends, log progress               |
-| 500+         | 5+      | Multiple appends with rate-limit awareness   |
-
-### Rate Limit Handling
-
-- Notion rate limit: ~3 requests/second for integrations.
-- Add a **350ms delay** between batch appends.
-- On `429 Too Many Requests`: wait for `Retry-After` header value, then retry.
-- Max retries per batch: **2** (with exponential backoff: 1s, 3s).
+1. **Calculate Batches**: Split `content_blocks` into chunks of **100**.
+2. **Sequential Append**: Use `PATCH /v1/blocks/{page_id}/children` for each batch.
+3. **Rate Limit Management (Bypass 429)**:
+   - Add a mandatory **350ms delay** between batch requests.
+   - **Retry Logic**: If a 429 error occurs, wait for the `Retry-After` duration (or 2s) and retry the batch (max 2 retries).
+4. **Finalize**: Once all batches are successful, return the final URL and status.
 
 ---
 
