@@ -21,6 +21,19 @@ Always produce complete, publish-ready content with:
 - Well-structured body with logical flow
 - Clear conclusion
 
+## Reference Format
+
+Follow the structure and style demonstrated in [sample_output.md](./references/sample_output.md). Your output must match this format including:
+
+- A clear title as an H1 heading
+- Metadata line (type, word count, audience) in bold
+- A horizontal rule separator after metadata
+- Strong opening hook paragraph (no heading)
+- H2 sections for major topics, H3 for sub-points within sections
+- Bullet lists with **bold lead-ins** followed by a dash and description for real-world examples
+- A concluding section with a clear call-to-action or takeaway
+- A sources/references line in italics at the end
+
 ## Guidelines
 
 - Adapt tone to the content type (blog post, article, report).
