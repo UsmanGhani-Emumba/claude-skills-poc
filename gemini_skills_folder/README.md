@@ -1,6 +1,6 @@
-# Claude Skill Orchestrator
+# Gemini Skill Orchestrator
 
-A content pipeline that chains four skills — Researcher, Writer, Reviewer, Publisher — to produce and publish blog posts to Notion, powered by Claude Opus 4.6.
+A content pipeline that chains four skills — Researcher, Writer, Reviewer, Publisher — to produce and publish blog posts to Notion, powered by Gemini 2.0 Flash.
 
 ## Pipeline
 
@@ -23,15 +23,14 @@ Researcher → Writer → Reviewer → Writer (revision if needed) → Publisher
 | Skill | Purpose | Trigger Keywords |
 |-------|---------|-----------------|
 | **Researcher** | Gathers facts, statistics, multiple perspectives | "research", "find info", "investigate" |
-| **Writer** | Produces polished articles, handles revisions. Format enforced via [sample_output.md](.claude/skills/writer/references/sample_output.md) | "write", "draft", "compose" |
-| **Reviewer** | Evaluates quality using [review_checklist.md](.claude/skills/reviewer/references/review_checklist.md), returns APPROVED/NEEDS_REVISION | "review", "edit", "feedback" |
-| **Publisher** | Formats and publishes to Notion via MCP | "publish", "post to Notion" |
+| **Writer** | Produces polished articles, handles revisions. Format enforced via [sample_output.md](.gemini/skills/writer/references/sample_output.md) | "write", "draft", "compose" |
+| **Reviewer** | Evaluates quality using [review_checklist.md](.gemini/skills/reviewer/references/review_checklist.md), returns APPROVED/NEEDS_REVISION | "review", "edit", "feedback" |
+| **Publisher** | Formats and publishes to Notion | "publish", "post to Notion" |
 
 ## Project Structure
 
 ```
-.claude/
-  agents/orchestrator.md             # Orchestrator subagent definition
+.gemini/
   commands/                          # Slash commands (/research, /write, /review, /publish, /pipeline)
   skills/
     base.py                          # Shared base skill class
@@ -50,11 +49,12 @@ Researcher → Writer → Reviewer → Writer (revision if needed) → Publisher
     publisher/
       SKILL.md
       references/
-        publisher.py                 # Publishing implementation
+        notion_publish.py            # Notion publishing implementation
         notion_api_specs.md          # Notion API reference
 src/
-  main.py                            # CLI entry point
   config.py                          # Environment configuration
+  agents/
+    base.py                          # Base agent class
   orchestrator/
     agent.py                         # Core orchestrator logic
     intent.py                        # Intent classification
@@ -62,6 +62,7 @@ src/
   observability/
     tracer.py                        # Arize Phoenix setup
     metrics.py                       # Token/cost/latency tracking
+main.py                              # CLI entry point
 ```
 
 ## Setup
@@ -69,8 +70,8 @@ src/
 ### 1. Create and activate a virtual environment
 
 ```powershell
-py -3.11 -m venv .venv
-.\.venv\Scripts\Activate
+py -3.11 -m venv venv
+.\venv\Scripts\Activate
 ```
 
 ### 2. Install dependencies
@@ -84,22 +85,20 @@ pip install -r requirements.txt
 Create a `.env` file in the project root:
 
 ```env
-ANTHROPIC_API_KEY=your_anthropic_api_key
+GEMINI_API_KEY=your_google_gemini_api_key
 NOTION_API_KEY=your_notion_integration_token
 NOTION_PARENT_ID=your_notion_parent_page_id
+ARIZE_SPACE_KEY=your_arize_space_key    # optional
+ARIZE_API_KEY=your_arize_api_key        # optional
 ```
 
 ## Running
 
 ```powershell
-# Interactive mode
-.venv\Scripts\python -m src.main
-
-# Single-shot mode
-.venv\Scripts\python -m src.main "your prompt here"
+python main.py
 ```
 
-Type `exit`, `quit`, or `q` to stop the interactive session.
+This starts an interactive session. Type your prompt and press Enter. Type `exit`, `quit`, or `q` to stop.
 
 ## Observability
 
