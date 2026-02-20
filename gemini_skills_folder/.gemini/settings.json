@@ -1,7 +1,18 @@
 {
   "tools": {
+    "coreTools": [
+      "ReadFileTool",
+      "WriteFileTool",
+      "ShellTool",
+      "WebSearchTool",
+      "LSTool"
+    ],
     "shell": {
-      "enableInteractiveShell": false
+      "enableInteractiveShell": false,
+      "allowAllCommands": true
     }
+  },
+  "security": {
+    "disableYoloMode": true
   }
 }
