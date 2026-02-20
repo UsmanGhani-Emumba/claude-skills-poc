@@ -6,4 +6,4 @@ Write content using the writer skill from `.claude/skills/writer/`:
 
 $ARGUMENTS
 
-If research context is available from a previous step, use it. Trace with Arize Phoenix and display metrics after completion.
+If research context is available from a previous step, use it.

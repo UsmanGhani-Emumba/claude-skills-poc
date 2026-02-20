@@ -1,6 +1,6 @@
 ---
 name: publisher
-description: Formats finalized content into structured JSON for Notion publishing. Extracts metadata, structures content blocks, and produces publish-ready output. The actual Notion API interaction is handled by the implementation code.
+description: Formats finalized content into structured JSON for Notion publishing (Parent ID: 2ff01e7f802c8041bb7bf826722f02da). Extracts metadata, structures content blocks, and produces publish-ready output. The actual Notion API interaction is handled by the implementation code.
 ---
 
 # Publisher Skill

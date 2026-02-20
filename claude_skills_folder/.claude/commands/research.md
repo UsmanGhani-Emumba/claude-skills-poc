@@ -6,4 +6,3 @@ Research the following topic using the researcher skill from `.claude/skills/res
 
 $ARGUMENTS
 
-Trace the execution with Arize Phoenix and display metrics (input tokens, output tokens, latency, cost) after completion.
