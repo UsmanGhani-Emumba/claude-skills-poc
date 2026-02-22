@@ -14,5 +14,27 @@
   },
   "security": {
     "disableYoloMode": true
+  },
+  "hooks": {
+    "BeforeTool": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python -c \"import sys,json,datetime,os; data=json.load(sys.stdin); sid=data.get('session_id','unknown')[:8]; os.makedirs('traces',exist_ok=True); entry={'event':'pre','tool':data.get('tool_name',''),'input':data.get('tool_input',{}),'session':data.get('session_id',''),'ts':datetime.datetime.now().isoformat()}; f=open(f'traces/hooks-{sid}.jsonl','a',encoding='utf-8'); f.write(json.dumps(entry)+'\\n'); f.close()\""
+          }
+        ]
+      }
+    ],
+    "AfterTool": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python -c \"import sys,json,datetime,os; data=json.load(sys.stdin); sid=data.get('session_id','unknown')[:8]; os.makedirs('traces',exist_ok=True); output=str(data.get('tool_response',''))[:500]; entry={'event':'post','tool':data.get('tool_name',''),'input':data.get('tool_input',{}),'output_preview':output,'session':data.get('session_id',''),'ts':datetime.datetime.now().isoformat()}; f=open(f'traces/hooks-{sid}.jsonl','a',encoding='utf-8'); f.write(json.dumps(entry)+'\\n'); f.close()\""
+          }
+        ]
+      }
+    ]
   }
 }
