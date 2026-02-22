@@ -16,7 +16,9 @@
       "Edit",
       "Glob",
       "Grep",
-      "Bash(env:*)"
+      "Bash(env:*)",
+      "Bash(del \"D:\\\\Automation Project Setups\\\\okr-app-pocs\\\\claude-code-skills-poc\\\\claude_skills_folder\\\\publish_run.py\")",
+      "WebFetch(domain:www.notion.so)"
     ]
   },
   "hooks": {

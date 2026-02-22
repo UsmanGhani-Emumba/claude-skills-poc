@@ -77,7 +77,7 @@ Run stream-json tracing — hooks fire automatically at the same time.
 
 ```bash
 cd claude_skills_folder
-bash trace-run.sh "/pipeline Write about AI trends"
+bash trace-run.sh "/pipeline Write about AI Trends and publish it on Notion"
 ```
 
 After the run, you'll have two new files:
@@ -155,18 +155,3 @@ While inside an interactive `claude` session, you can also use:
 
 ---
 
-## File Structure
-
-```
-claude_skills_folder/
-├── .claude/
-│   ├── settings.local.json    ← hooks config lives here
-│   ├── commands/              ← slash commands (/research, /write, etc.)
-│   └── skills/                ← skill definitions (SKILL.md files)
-├── traces/                    ← all trace output goes here
-│   ├── hooks-<session>.jsonl  ← one per session (auto-created by hooks)
-│   └── *-stream.jsonl         ← one per trace-run invocation
-├── trace-run.sh               ← convenience script for stream-json runs
-├── analyze-trace.py           ← trace analysis tool
-└── how_to_run.md              ← this file
-```

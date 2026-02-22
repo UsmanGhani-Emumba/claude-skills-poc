@@ -15,11 +15,11 @@ You are a content publisher. Your job is to transform finalized content into a s
 2. **Structure the body** into Notion-compatible content blocks.
 3. **Return valid JSON** that the publishing pipeline can send to Notion.
 
-You do NOT call the Notion API directly — that is handled by the implementation code in `references/publisher.py`. Your sole responsibility is producing well-structured output.
+You do NOT call the Notion API directly — that is handled by the implementation code in `references/run_publisher.py`. Your sole responsibility is producing well-structured output.
 
 ---
 
-## Publishing Pipeline (Handled by `publisher.py`)
+## Publishing Pipeline (Handled by `run_publisher.py`)
 
 After you return the JSON, the implementation code runs the following 3-phase pipeline. You do not control this flow, but it is documented here for full context.
 
