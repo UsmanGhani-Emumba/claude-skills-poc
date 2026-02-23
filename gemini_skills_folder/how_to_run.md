@@ -28,16 +28,16 @@ gemini
 Then type any skill command:
 
 ```
-/research How to remember things like a pro
-/pipeline Write about AI trends
-/write Draft a blog post about productivity
+@.gemini/commands/research.md How to remember things like a pro
+@.gemini/commands/pipeline.md How to remember things like a pro
+@.gemini/commands/write.md How to remember things like a pro
 ```
 
 ### Headless mode
 
 ```bash
 cd gemini_skills_folder
-gemini "/research How to remember things like a pro"
+gemini "@.gemini/commands/research.md How to remember things like a pro"
 ```
 
 Both modes produce the same hook trace files.
@@ -52,7 +52,7 @@ Use this when you want a **full event stream** — every token, every tool call,
 
 ```bash
 cd gemini_skills_folder
-bash trace-run.sh "/research How to remember things like a pro"
+bash trace-run.sh "@.gemini/commands/research.md How to remember things like a pro"
 ```
 
 This creates a timestamped trace file like `traces/20260220-134500-stream.jsonl`.
@@ -61,7 +61,7 @@ This creates a timestamped trace file like `traces/20260220-134500-stream.jsonl`
 
 ```bash
 cd gemini_skills_folder
-gemini -o stream-json "/research How to remember things like a pro" \
+gemini -o stream-json "@.gemini/commands/research.md How to remember things like a pro" \
     | tee traces/my-trace.jsonl
 ```
 
@@ -73,7 +73,7 @@ Run stream-json tracing — hooks fire automatically at the same time.
 
 ```bash
 cd gemini_skills_folder
-bash trace-run.sh "/pipeline Write about AI Trends and publish it on Notion"
+bash trace-run.sh "@.gemini/commands/pipeline.md How to remember things like a pro"
 ```
 
 After the run, you'll have two new files:

@@ -29,8 +29,8 @@ Then type any skill command:
 
 ```
 /research How to remember things like a pro
-/pipeline Write about AI trends
-/write Draft a blog post about productivity
+/pipeline how to boost productivity
+/write how to boost productivity
 ```
 
 ### Headless mode
@@ -77,7 +77,7 @@ Run stream-json tracing — hooks fire automatically at the same time.
 
 ```bash
 cd claude_skills_folder
-bash trace-run.sh "/pipeline Write about AI Trends and publish it on Notion"
+bash trace-run.sh "/pipeline How to remember things like a pro"
 ```
 
 After the run, you'll have two new files:
