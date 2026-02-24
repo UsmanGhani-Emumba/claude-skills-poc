@@ -163,6 +163,7 @@ def analyze_stream(filepath):
     total_cost = None
     session_id = None
     duration = None
+    model_usage = None
 
     for e in entries:
         etype = e.get("type", "unknown")
@@ -171,19 +172,27 @@ def analyze_stream(filepath):
             tool_name = e.get("tool_name", e.get("name", "unknown"))
             pending_tools.append(tool_name)
 
+        if etype == "result":
+            model_usage = e.get("modelUsage")
+            total_cost = e.get("total_cost_usd")
+
         usage = e.get("usage")
         if usage:
             inp = int(usage.get("input_tokens") or 0)
+            cache_create = int(usage.get("cache_creation_input_tokens") or 0)
+            cache_read = int(usage.get("cache_read_input_tokens") or 0)
+            total_inp = inp + cache_create + cache_read
             out = int(usage.get("output_tokens") or 0)
-            delta_in = inp - prev_input
+            delta_in = total_inp - prev_input
             delta_out = out - prev_output
             if delta_in > 0 or delta_out > 0:
                 turn_num += 1
                 tools_str = ", ".join(pending_tools) if pending_tools else "(no tool call)"
                 print(f"  Turn {turn_num}: [{tools_str}]")
-                print(f"    +{delta_in:>6} input  +{delta_out:>6} output  (running total: {inp:,} / {out:,})")
+                cache_note = f"  (input: {inp:,} + cache_write: {cache_create:,} + cache_read: {cache_read:,})" if cache_create or cache_read else ""
+                print(f"    +{delta_in:>6} input  +{delta_out:>6} output  (running total: {total_inp:,} / {out:,}){cache_note}")
                 pending_tools = []
-                prev_input = inp
+                prev_input = total_inp
                 prev_output = out
 
         if "cost" in e:
@@ -195,12 +204,45 @@ def analyze_stream(filepath):
 
     print()
     print("  " + "=" * 56)
-    if prev_input > 0 or prev_output > 0:
-        print(f"  GRAND TOTAL:  {prev_input:,} input tokens / {prev_output:,} output tokens")
+
+    if model_usage:
+        # modelUsage includes sub-agent tokens — use it as the authoritative total
+        print("  GRAND TOTAL (incl. sub-agents, from modelUsage):")
+        grand_input = 0
+        grand_cache_create = 0
+        grand_cache_read = 0
+        grand_output = 0
+        grand_cost = 0.0
+        for model, mu in model_usage.items():
+            m_inp = int(mu.get("inputTokens") or 0)
+            m_cc = int(mu.get("cacheCreationInputTokens") or 0)
+            m_cr = int(mu.get("cacheReadInputTokens") or 0)
+            m_out = int(mu.get("outputTokens") or 0)
+            m_cost = float(mu.get("costUSD") or 0)
+            grand_input += m_inp
+            grand_cache_create += m_cc
+            grand_cache_read += m_cr
+            grand_output += m_out
+            grand_cost += m_cost
+            if m_out == 0 and m_cost == 0:
+                continue
+            m_total_inp = m_inp + m_cc + m_cr
+            print(f"    {model}:")
+            print(f"      input: {m_inp:>8,}  cache_write: {m_cc:>8,}  cache_read: {m_cr:>9,}  -> total_in: {m_total_inp:>9,}")
+            print(f"      output: {m_out:>7,}  cost: ${m_cost:.4f}")
+        grand_total_inp = grand_input + grand_cache_create + grand_cache_read
+        print(f"  {'-' * 54}")
+        print(f"  TOTAL  input: {grand_input:>8,}  cache_write: {grand_cache_create:>8,}  cache_read: {grand_cache_read:>9,}")
+        print(f"         effective input: {grand_total_inp:,}  |  output: {grand_output:,}  |  cost: ${grand_cost:.4f}")
+    elif prev_input > 0 or prev_output > 0:
+        print(f"  GRAND TOTAL:  {prev_input:,} effective input tokens (incl. cache) / {prev_output:,} output tokens")
+        if total_cost is not None:
+            print(f"  Total cost:   ${total_cost}")
     else:
         print("  GRAND TOTAL:  (no token data — requires API key, shows 0 on Pro)")
-    if total_cost is not None:
-        print(f"  Total cost:   ${total_cost}")
+        if total_cost is not None:
+            print(f"  Total cost:   ${total_cost}")
+
     if session_id:
         print(f"  Session ID:   {session_id}")
     if duration:

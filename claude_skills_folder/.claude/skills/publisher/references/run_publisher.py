@@ -89,7 +89,7 @@ def _append_batch_with_retry(page_id, batch, headers, batch_num, total_batches):
 
 def _publish_to_notion_rest(data):
     api_key = os.getenv("NOTION_API_KEY")
-    parent_id = "2ff01e7f802c8041bb7bf826722f02da"
+    parent_id = "2f801e7f802c80cda17cd058fe3d60b3"
     if not api_key:
         raise ValueError("NOTION_API_KEY must be set in .env")
     headers = {

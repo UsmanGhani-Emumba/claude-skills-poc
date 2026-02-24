@@ -2,8 +2,10 @@
 description: Write content using the writer skill
 ---
 
-Write content using the writer skill from `.claude/skills/writer/`:
+Run the write pipeline for:
 
 $ARGUMENTS
 
-If research context is available from a previous step, use it.
+Execute in order:
+1. Researcher skill → produce research brief
+2. Writer skill → draft content using research brief
