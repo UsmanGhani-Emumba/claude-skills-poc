@@ -152,38 +152,74 @@ def analyze_stream(filepath):
     else:
         print("    (none found)")
 
-    # Look for usage/cost info — Gemini uses 'result' event with 'stats' field
+    # Token accumulation across all events
     print()
-    print("  Session Info (from final events):")
-    found_info = False
-    for e in entries[-5:]:
-        # Check for Gemini 'result' event with stats
-        if e.get("type") == "result" and "stats" in e:
-            found_info = True
+    print("  Token Usage per Turn (accumulated):")
+    print("  " + "-" * 56)
+    prev_input = 0
+    prev_output = 0
+    pending_tools = []
+    turn_num = 0
+    total_cost = None
+    session_id = None
+    duration = None
+    latency_ms = None
+
+    for e in entries:
+        etype = e.get("type", "unknown")
+
+        if etype == "tool_use":
+            tool_name = e.get("tool_name", e.get("name", "unknown"))
+            pending_tools.append(tool_name)
+
+        # Resolve usage from either Gemini 'stats' or Claude-style 'usage'
+        usage = None
+        if etype == "result" and "stats" in e:
             stats = e["stats"]
-            print(f"    Input tokens:  {stats.get('input_tokens', '?')}")
-            print(f"    Output tokens: {stats.get('output_tokens', '?')}")
-            if "total_tokens" in stats:
-                print(f"    Total tokens:  {stats['total_tokens']}")
+            usage = {
+                "input_tokens": stats.get("input_tokens", 0),
+                "output_tokens": stats.get("output_tokens", 0),
+            }
             if "latency_ms" in stats:
-                print(f"    Latency:       {stats['latency_ms']}ms")
+                latency_ms = stats["latency_ms"]
+        elif "usage" in e:
+            usage = e["usage"]
 
-        # Also check Claude-style fields for compatibility
-        if "usage" in e or "cost" in e or "session_id" in e:
-            found_info = True
-            if "session_id" in e:
-                print(f"    Session ID:    {e['session_id']}")
-            if "usage" in e:
-                u = e["usage"]
-                print(f"    Input tokens:  {u.get('input_tokens', '?')}")
-                print(f"    Output tokens: {u.get('output_tokens', '?')}")
-            if "cost" in e:
-                print(f"    Cost:          ${e['cost']}")
-            if "duration" in e:
-                print(f"    Duration:      {e['duration']}")
+        if usage:
+            inp = int(usage.get("input_tokens") or 0)
+            out = int(usage.get("output_tokens") or 0)
+            delta_in = inp - prev_input
+            delta_out = out - prev_output
+            if delta_in > 0 or delta_out > 0:
+                turn_num += 1
+                tools_str = ", ".join(pending_tools) if pending_tools else "(no tool call)"
+                print(f"  Turn {turn_num}: [{tools_str}]")
+                print(f"    +{delta_in:>6} input  +{delta_out:>6} output  (running total: {inp:,} / {out:,})")
+                pending_tools = []
+                prev_input = inp
+                prev_output = out
 
-    if not found_info:
-        print("    (no token/cost data found in final events)")
+        if "cost" in e:
+            total_cost = e["cost"]
+        if "session_id" in e:
+            session_id = e["session_id"]
+        if "duration" in e:
+            duration = e["duration"]
+
+    print()
+    print("  " + "=" * 56)
+    if prev_input > 0 or prev_output > 0:
+        print(f"  GRAND TOTAL:  {prev_input:,} input tokens / {prev_output:,} output tokens")
+    else:
+        print("  GRAND TOTAL:  (no token data found in trace events)")
+    if total_cost is not None:
+        print(f"  Total cost:   ${total_cost}")
+    if session_id:
+        print(f"  Session ID:   {session_id}")
+    if duration:
+        print(f"  Duration:     {duration}")
+    if latency_ms is not None:
+        print(f"  Latency:      {latency_ms}ms")
 
     print("=" * 60)
 

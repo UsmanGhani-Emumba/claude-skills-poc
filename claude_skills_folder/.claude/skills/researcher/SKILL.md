@@ -1,6 +1,8 @@
 ---
 name: researcher
 description: Deep research on a topic using parallel sub-agent decomposition. Splits a topic into subtopics, assigns research approaches per subtopic, then spawns all (subtopic, approach) sub-agents in a single parallel batch for comprehensive results. Use when the user asks to research, investigate, or find information about a topic.
+context: fork
+agent: general-purpose
 ---
 
 # Researcher Skill

@@ -152,25 +152,59 @@ def analyze_stream(filepath):
     else:
         print("    (none found)")
 
-    # Look for usage/cost info in the last few events
+    # Token accumulation across all events
     print()
-    print("  Session Info (from final events):")
-    found_info = False
-    for e in entries[-5:]:
-        if "usage" in e or "cost" in e or "session_id" in e:
-            found_info = True
-            if "session_id" in e:
-                print(f"    Session ID:    {e['session_id']}")
-            if "usage" in e:
-                u = e["usage"]
-                print(f"    Input tokens:  {u.get('input_tokens', '?')}")
-                print(f"    Output tokens: {u.get('output_tokens', '?')}")
-            if "cost" in e:
-                print(f"    Cost:          ${e['cost']}")
-            if "duration" in e:
-                print(f"    Duration:      {e['duration']}")
-    if not found_info:
-        print("    (no token/cost data — requires API key, shows 0 on Pro)")
+    print("  Token Usage per Turn (accumulated):")
+    print("  " + "-" * 56)
+    prev_input = 0
+    prev_output = 0
+    pending_tools = []
+    turn_num = 0
+    total_cost = None
+    session_id = None
+    duration = None
+
+    for e in entries:
+        etype = e.get("type", "unknown")
+
+        if etype == "tool_use":
+            tool_name = e.get("tool_name", e.get("name", "unknown"))
+            pending_tools.append(tool_name)
+
+        usage = e.get("usage")
+        if usage:
+            inp = int(usage.get("input_tokens") or 0)
+            out = int(usage.get("output_tokens") or 0)
+            delta_in = inp - prev_input
+            delta_out = out - prev_output
+            if delta_in > 0 or delta_out > 0:
+                turn_num += 1
+                tools_str = ", ".join(pending_tools) if pending_tools else "(no tool call)"
+                print(f"  Turn {turn_num}: [{tools_str}]")
+                print(f"    +{delta_in:>6} input  +{delta_out:>6} output  (running total: {inp:,} / {out:,})")
+                pending_tools = []
+                prev_input = inp
+                prev_output = out
+
+        if "cost" in e:
+            total_cost = e["cost"]
+        if "session_id" in e:
+            session_id = e["session_id"]
+        if "duration" in e:
+            duration = e["duration"]
+
+    print()
+    print("  " + "=" * 56)
+    if prev_input > 0 or prev_output > 0:
+        print(f"  GRAND TOTAL:  {prev_input:,} input tokens / {prev_output:,} output tokens")
+    else:
+        print("  GRAND TOTAL:  (no token data — requires API key, shows 0 on Pro)")
+    if total_cost is not None:
+        print(f"  Total cost:   ${total_cost}")
+    if session_id:
+        print(f"  Session ID:   {session_id}")
+    if duration:
+        print(f"  Duration:     {duration}")
 
     print("=" * 60)
 

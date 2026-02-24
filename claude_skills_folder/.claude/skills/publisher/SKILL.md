@@ -1,6 +1,7 @@
 ---
 name: publisher
 description: Formats finalized content into structured JSON for Notion publishing. Extracts metadata, structures content blocks, and produces publish-ready output. The actual Notion API interaction is handled by the implementation code.
+disable-model-invocation: true
 ---
 
 # Publisher Skill

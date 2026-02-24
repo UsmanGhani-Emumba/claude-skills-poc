@@ -1,6 +1,7 @@
 ---
 name: reviewer
 description: Reviews and edits written content for quality, accuracy, and clarity. Provides specific, actionable feedback with a score. Use when the user asks to review, edit, critique, or provide feedback on content.
+allowed-tools: Read Grep Glob
 ---
 
 # Reviewer Skill
