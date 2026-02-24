@@ -1,0 +1,65 @@
+{
+    "status": "passed",
+    "notion_url": "",
+    "error_message": "",
+    "title": "How to Be a Good Tech Lead",
+    "tags": ["tech lead", "leadership", "engineering", "team management", "communication"],
+    "category": "Engineering Leadership",
+    "summary": "A great tech lead shifts identity from best coder to team force-multiplier, balancing technical credibility with deliberate delegation and bilingual communication. The true measure of a tech lead is not what they personally ship, but how much more the whole team can ship because of their leadership.",
+    "content_blocks": [
+        {
+            "type": "callout",
+            "text": "The measure of a tech lead is not what they personally ship, but how much more the whole team is capable of shipping because of their leadership. — Patrick Kua"
+        },
+        {
+            "type": "divider"
+        },
+        {
+            "type": "heading_2",
+            "text": "The Identity Shift: From Coder to Multiplier"
+        },
+        {
+            "type": "paragraph",
+            "text": "A great tech lead understands that their primary job is no longer to be the best coder in the room, but to make the entire team more effective — a shift in identity that many engineers struggle to make when first stepping into the role."
+        },
+        {
+            "type": "heading_2",
+            "text": "Technical Credibility and the Art of Stepping Back"
+        },
+        {
+            "type": "paragraph",
+            "text": "Technical credibility remains essential for earning trust and making sound architectural decisions, yet it must be balanced with the discipline to step back from implementation and deliberately delegate, ensuring colleagues grow rather than become dependent."
+        },
+        {
+            "type": "heading_2",
+            "text": "Communication: The Most Underestimated Skill"
+        },
+        {
+            "type": "paragraph",
+            "text": "Perhaps the most underestimated skill is communication, and it's one that separates good tech leads from great ones. The best operate bilingually, translating complex technical constraints into language that resonates with business stakeholders, while at the same time keeping engineers grounded in product priorities."
+        },
+        {
+            "type": "heading_2",
+            "text": "Building Distributed Ownership"
+        },
+        {
+            "type": "paragraph",
+            "text": "The best tech leads turn every code review into a teaching moment and every architectural discussion into an opportunity to build distributed ownership rather than centralize knowledge. This approach ensures the team grows stronger collectively over time."
+        },
+        {
+            "type": "heading_2",
+            "text": "The True Measure of a Tech Lead"
+        },
+        {
+            "type": "paragraph",
+            "text": "Ultimately, as Patrick Kua frames it, the measure of a tech lead is not what they personally ship, but how much more the whole team is capable of shipping because of their leadership — a craft that, like engineering itself, demands deliberate and continuous practice."
+        },
+        {
+            "type": "divider"
+        },
+        {
+            "type": "callout",
+            "text": "Key Takeaway: Leadership is a craft that demands deliberate and continuous practice — just like engineering itself."
+        }
+    ]
+}
