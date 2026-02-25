@@ -50,26 +50,12 @@ Use this when you want a **full event stream** — every token, every tool call,
 
 ### Use the convenience script
 
+Run stream-json tracing — hooks fire automatically at the same time.
+
 ```bash
 cd gemini_skills_folder
 bash trace-run.sh "@.gemini/commands/research.md How to remember things like a pro"
 ```
-
-This creates a timestamped trace file like `traces/20260220-134500-stream.jsonl`.
-
-### Or run manually
-
-```bash
-cd gemini_skills_folder
-gemini -o stream-json "@.gemini/commands/research.md How to remember things like a pro" \
-    | tee traces/my-trace.jsonl
-```
-
----
-
-## 3. Both Together (Recommended)
-
-Run stream-json tracing — hooks fire automatically at the same time.
 
 ```bash
 cd gemini_skills_folder

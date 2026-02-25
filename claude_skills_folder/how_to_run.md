@@ -57,24 +57,6 @@ cd claude_skills_folder
 bash trace-run.sh "/research How to remember things like a pro"
 ```
 
-This creates a timestamped trace file like `traces/20260220-134500-stream.jsonl`.
-
-### Or run manually
-
-```bash
-cd claude_skills_folder
-claude -p "/research How to remember things like a pro" \
-    --output-format stream-json \
-    --verbose \
-    | tee traces/my-trace.jsonl
-```
-
----
-
-## 3. Both Together (Recommended)
-
-Run stream-json tracing — hooks fire automatically at the same time.
-
 ```bash
 cd claude_skills_folder
 bash trace-run.sh "/pipeline How to remember things like a pro"
